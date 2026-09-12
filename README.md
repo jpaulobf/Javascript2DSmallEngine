@@ -31,6 +31,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 ├── README.md
 ├── code/
 │   ├── constants.js
+│   ├── game-rendering.js
 │   ├── game-loop.js
 │   ├── game.js
 │   ├── main.js
@@ -70,7 +71,8 @@ http://localhost:8000
 ## Como funciona
 
 - `main.js` instancia o jogo e dispara a partida com Enter.
-- `game.js` controla a criação da janela, atualização, renderização e música.
+- `game.js` controla o estado, a entrada, a atualização e a música do jogo.
+- `game-rendering.js` controla o canvas, a janela, os buffers e a renderização.
 - `game-loop.js` executa o loop principal do jogo e limita o FPS.
 - `sound.js` gerencia a reprodução de áudio.
 - `constants.js` define os modos de tela e buffering.
