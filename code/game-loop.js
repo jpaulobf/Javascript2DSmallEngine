@@ -1,11 +1,11 @@
 export class GameLoop {
 
-    constructor(targetFPS, game, renderer) {
+    constructor(targetFPS, game, renderCallback) {
         this.running = false;
         this.targetFPS = targetFPS;
         this.timePerTick = targetFPS > 0 ? 1000 / targetFPS : 0;
         this.game = game;
-        this.renderer = renderer;
+        this.renderCallback = renderCallback;
         this.timerId = null;
         this.animationFrameId = null;
     }
@@ -13,10 +13,6 @@ export class GameLoop {
     setTargetFPS(targetFPS) {
         this.targetFPS = targetFPS;
         this.timePerTick = targetFPS > 0 ? 1000 / targetFPS : 0;
-    }
-
-    setRenderer(renderer) {
-        this.renderer = renderer;
     }
 
     start() {
@@ -60,7 +56,7 @@ export class GameLoop {
 
             this.game.processInput();
             this.game.update(deltaTime);
-            this.renderer.render(this.game);
+            this.renderCallback();
             frames++;
 
             if (timer >= 1000) {
@@ -91,7 +87,7 @@ export class GameLoop {
 
             this.game.processInput();
             this.game.update(deltaTime);
-            this.renderer.render(this.game);
+            this.renderCallback();
             frames++;
             timer += deltaTime * 1000;
 

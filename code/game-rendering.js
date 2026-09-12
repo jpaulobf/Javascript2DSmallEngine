@@ -2,25 +2,33 @@ import { BufferingMode, WindowMode } from './constants.js';
 
 export class GameRenderer {
 
-    constructor(bufferingMode, windowMode, width, height) {
-        this.bufferingMode = bufferingMode;
-        this.windowMode = windowMode;
+    constructor(config) {
+        this.bufferingMode = config.bufferingMode;
+        this.windowMode = config.windowMode;
 
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
 
-        this.initWindow(width, height);
+        this.initWindow(config.width, config.height);
 
-        this.canvasMemoryA = null;
-        this.ctxMemoryA = null;
+        this.bufferCanvases = [];
+        this.bufferContexts = [];
+        this.bufferIndex = -1;
 
-        if (bufferingMode === BufferingMode.DOUBLE) {
-            this.canvasMemoryA = document.createElement('canvas');
-            this.canvasMemoryA.width = this.canvas.width;
-            this.canvasMemoryA.height = this.canvas.height;
-            this.ctxMemoryA = this.canvasMemoryA.getContext('2d');
+        const bufferCount = this.getBufferCount();
+        for (let index = 0; index < bufferCount; index++) {
+            const bufferCanvas = document.createElement('canvas');
+            bufferCanvas.width = this.canvas.width;
+            bufferCanvas.height = this.canvas.height;
+            this.bufferCanvases.push(bufferCanvas);
+            this.bufferContexts.push(bufferCanvas.getContext('2d'));
         }
+    }
 
+    getBufferCount() {
+        if (this.bufferingMode === BufferingMode.DOUBLE) return 1;
+        if (this.bufferingMode === BufferingMode.TRIPLE) return 2;
+        return 0;
     }
 
     initWindow(width, height) {
@@ -44,58 +52,26 @@ export class GameRenderer {
         }
     }
 
-    render(game) {
-        const isDoubleBuffered = this.bufferingMode === BufferingMode.DOUBLE;
-        const context = isDoubleBuffered ? this.ctxMemoryA : this.ctx;
-        const canvas = isDoubleBuffered ? this.canvasMemoryA : this.canvas;
+    render(drawFrame) {
+        const isBuffered = this.bufferCanvases.length > 0;
+        let context = this.ctx;
+        let canvas = this.canvas;
+
+        if (isBuffered) {
+            this.bufferIndex = (this.bufferIndex + 1) % this.bufferContexts.length;
+            context = this.bufferContexts[this.bufferIndex];
+            canvas = this.bufferCanvases[this.bufferIndex];
+        }
 
         context.clearRect(0, 0, canvas.width, canvas.height);
-        this.renderFrame(context, canvas, game);
-
-        if (isDoubleBuffered) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.drawImage(this.canvasMemoryA, 0, 0);
-        }
-    }
-
-    renderFrame(context, canvas, game) {
         context.save();
-        if (!game.started) {
-            this.renderStartMessage(context, canvas);
-            context.restore();
-            return;
-        }
-
-        this.renderCar(context, game, canvas.height);
-
-        context.font = '20px Arial';
-        context.fillStyle = 'red';
-        context.textAlign = 'left';
-        context.textBaseline = 'alphabetic';
-        context.fillText(`FPS: ${game.fps}`, 10, 30);
-
+        drawFrame(context, canvas);
         context.restore();
+
+        if (isBuffered) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.drawImage(canvas, 0, 0);
+        }
     }
 
-    renderCar(context, game, canvasHeight) {
-        context.fillStyle = 'blue';
-        context.fillRect(game.carPositionX, canvasHeight - 50, 50, 30);
-
-        context.fillStyle = 'black';
-        context.beginPath();
-        context.arc(game.carPositionX + 10, canvasHeight - 20, 7, 0, Math.PI * 2);
-        context.fill();
-
-        context.beginPath();
-        context.arc(game.carPositionX + 40, canvasHeight - 20, 7, 0, Math.PI * 2);
-        context.fill();
-    }
-
-    renderStartMessage(context, canvas) {
-        context.fillStyle = 'black';
-        context.font = '28px Arial';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText('Press ENTER to start', canvas.width / 2, canvas.height / 2);
-    }
 }

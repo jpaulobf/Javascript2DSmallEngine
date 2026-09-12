@@ -1,12 +1,15 @@
 import { BufferingMode, WindowMode } from './constants.js';
-import { Game } from './game.js';
-import { GameRenderer } from './game-rendering.js';
+import { CarGame } from './car-game.js';
 
-const game = new Game(120, 800, 600);
-const renderer = new GameRenderer(BufferingMode.DOUBLE, WindowMode.WINDOWED, 800, 600);
-game.setRenderer(renderer);
+const config = {
+    fps: 60,
+    width: 800,
+    height: 600,
+    bufferingMode: BufferingMode.DOUBLE,
+    windowMode: WindowMode.WINDOWED
+};
 
-renderer.render(game);
+const game = new CarGame(config);
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.repeat) {

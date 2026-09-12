@@ -1,51 +1,50 @@
-import { Sound } from './sound.js';
 import { GameLoop } from './game-loop.js';
+import { GameRenderer } from './game-rendering.js';
 
 export class Game {
 
-    constructor(FPS, width, height) {
-        this.fps = FPS;
-        this.width = width;
-        this.height = height;
-
-        this.carPositionX = 0;
-        this.carSpeed = 200.0;
-        this.distance = 0.0;
+    constructor(config) {
+        this.config = config;
+        this.fps = config.fps;
+        this.width = config.width;
+        this.height = config.height;
         this.started = false;
 
-        this.music = new Sound('../resources/1.mp3');
-        this.gameLoop = new GameLoop(FPS, this);
-    }
+        this.renderer = new GameRenderer(config);
+        this.gameLoop = new GameLoop(config.fps, this, () => this.renderFrame());
 
-    setRenderer(renderer) {
-        this.gameLoop.setRenderer(renderer);
+        this.init();
+        this.renderFrame();
     }
 
     start() {
         if (this.gameLoop.running) return;
         this.started = true;
-        this.music.loop();
+        this.startMusic();
         this.gameLoop.start();
     }
 
-    setCurrentFPS(fps) {
-        this.fps = fps;
+    startMusic() {
     }
 
     processInput() {
         // Placeholder para processar entradas do usuário
     }
 
-    update(deltaTime) {
-        if (this.carPositionX > this.width - 50) {
-            this.carPositionX = this.width - 50;
-            this.carSpeed = -Math.abs(this.carSpeed);
-        } else if (this.carPositionX < 0) {
-            this.carPositionX = 0;
-            this.carSpeed = Math.abs(this.carSpeed);
-        }
+    setCurrentFPS(fps) {
+        this.fps = fps;
+    }
 
-        this.distance = this.carSpeed * deltaTime;
-        this.carPositionX += this.distance;
+    renderFrame() {
+        this.renderer.render((context, canvas) => this.render(context, canvas));
+    }
+
+    init() {
+    }
+
+    update(deltaTime) {
+    }
+
+    render(context, canvas) {
     }
 }

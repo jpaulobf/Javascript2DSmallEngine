@@ -17,7 +17,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 
 - Canvas 2D para renderização
 - Game loop com controle de tempo e FPS
-- Modo de buffering: sem buffer e duplo buffer
+- Modo de buffering: sem buffer, buffer duplo e buffer triplo
 - Modo de janela: normal, fullscreen e janela em fullscreen
 - Exibição de um carro simples em movimento horizontal
 - Música de fundo com suporte a loop
@@ -31,6 +31,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 ├── README.md
 ├── code/
 │   ├── constants.js
+│   ├── car-game.js
 │   ├── game-rendering.js
 │   ├── game-loop.js
 │   ├── game.js
@@ -70,10 +71,11 @@ http://localhost:8000
 
 ## Como funciona
 
-- `main.js` instancia o jogo e dispara a partida com Enter.
-- `game.js` controla o estado, a entrada, a atualização e a música do jogo.
-- `game-rendering.js` controla o canvas, a janela, os buffers e a renderização.
-- `game-loop.js` executa o loop principal do jogo e limita o FPS.
+- `main.js` configura o jogo concreto e dispara a partida com Enter.
+- `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas e os buffers.
+- `car-game.js` é um exemplo de jogo que implementa `init`, `update` e `render`.
+- `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
+- `game-loop.js` executa o loop principal, atualiza o jogo e limita o FPS.
 - `sound.js` gerencia a reprodução de áudio.
 - `constants.js` define os modos de tela e buffering.
 
