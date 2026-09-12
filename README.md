@@ -19,7 +19,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 - Game loop com controle de tempo e FPS
 - Modo de buffering: sem buffer, buffer duplo e buffer triplo
 - Modo de janela: normal, fullscreen e janela em fullscreen
-- Exibição de um carro simples em movimento horizontal
+- Jogo Breakout com raquete, bola, blocos, pontuação e vidas
 - Música de fundo com suporte a loop
 - Tela inicial com instrução para iniciar ao pressionar Enter
 
@@ -32,6 +32,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 ├── code/
 │   ├── constants.js
 │   ├── car-game.js
+│   ├── breakout-game.js
 │   ├── game-rendering.js
 │   ├── game-loop.js
 │   ├── game.js
@@ -71,9 +72,10 @@ http://localhost:8000
 
 ## Como funciona
 
-- `main.js` configura o jogo concreto, inicializa-o e dispara a partida com Enter.
+- `main.js` configura o Breakout, inicializa-o e dispara a partida com Enter.
 - `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas e os buffers.
-- `car-game.js` é um exemplo de jogo que implementa `init`, `update` e `render`.
+- `breakout-game.js` implementa o jogo com `init`, `update` e `render`.
+- `car-game.js` permanece como um exemplo alternativo de classe filha.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
 - `game-loop.js` executa o loop principal, atualiza o jogo e limita o FPS.
 - `sound.js` gerencia a reprodução de áudio.

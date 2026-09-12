@@ -1,5 +1,5 @@
 import { BufferingMode, WindowMode } from './constants.js';
-import { CarGame } from './car-game.js';
+import { BreakoutGame } from './breakout-game.js';
 
 const config = {
     fps: 60,
@@ -9,7 +9,7 @@ const config = {
     windowMode: WindowMode.WINDOWED
 };
 
-const game = new CarGame(config);
+const game = new BreakoutGame(config);
 game.initialize();
 
 window.addEventListener('keydown', (event) => {
