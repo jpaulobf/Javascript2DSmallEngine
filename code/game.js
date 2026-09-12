@@ -9,15 +9,22 @@ export class Game {
         this.width = config.width;
         this.height = config.height;
         this.started = false;
+        this.initialized = false;
 
         this.renderer = new GameRenderer(config);
         this.gameLoop = new GameLoop(config.fps, this, () => this.renderFrame());
+    }
+
+    initialize() {
+        if (this.initialized) return;
 
         this.init();
+        this.initialized = true;
         this.renderFrame();
     }
 
     start() {
+        this.initialize();
         if (this.gameLoop.running) return;
         this.started = true;
         this.startMusic();

@@ -71,7 +71,7 @@ http://localhost:8000
 
 ## Como funciona
 
-- `main.js` configura o jogo concreto e dispara a partida com Enter.
+- `main.js` configura o jogo concreto, inicializa-o e dispara a partida com Enter.
 - `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas e os buffers.
 - `car-game.js` é um exemplo de jogo que implementa `init`, `update` e `render`.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.

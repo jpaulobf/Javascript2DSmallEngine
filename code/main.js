@@ -10,6 +10,7 @@ const config = {
 };
 
 const game = new CarGame(config);
+game.initialize();
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.repeat) {
