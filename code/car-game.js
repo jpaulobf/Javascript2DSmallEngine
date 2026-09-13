@@ -10,6 +10,7 @@ export class CarGame extends Game {
 
     resetGame() {
         this.carPositionX = 0;
+        this.previousCarPositionX = this.carPositionX;
         this.carSpeed = 200.0;
         this.distance = 0.0;
     }
@@ -23,6 +24,9 @@ export class CarGame extends Game {
     }
 
     update(deltaTime) {
+        if (!this.started) return;
+
+        this.previousCarPositionX = this.carPositionX;
         if (this.carPositionX > this.width - 50) {
             this.carPositionX = this.width - 50;
             this.carSpeed = -Math.abs(this.carSpeed);
@@ -35,7 +39,7 @@ export class CarGame extends Game {
         this.carPositionX += this.distance;
     }
 
-    render(context, canvas) {
+    render(context, canvas, interpolation) {
         context.font = '20px Arial';
         context.fillStyle = 'red';
         context.textAlign = 'left';
@@ -50,16 +54,19 @@ export class CarGame extends Game {
             return;
         }
 
+        const carPositionX = this.previousCarPositionX +
+            (this.carPositionX - this.previousCarPositionX) * interpolation;
+
         context.fillStyle = 'blue';
-        context.fillRect(this.carPositionX, canvas.height - 50, 50, 30);
+        context.fillRect(carPositionX, canvas.height - 50, 50, 30);
 
         context.fillStyle = 'black';
         context.beginPath();
-        context.arc(this.carPositionX + 10, canvas.height - 20, 7, 0, Math.PI * 2);
+        context.arc(carPositionX + 10, canvas.height - 20, 7, 0, Math.PI * 2);
         context.fill();
 
         context.beginPath();
-        context.arc(this.carPositionX + 40, canvas.height - 20, 7, 0, Math.PI * 2);
+        context.arc(carPositionX + 40, canvas.height - 20, 7, 0, Math.PI * 2);
         context.fill();
 
         context.font = '20px Arial';
