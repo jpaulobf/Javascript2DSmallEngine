@@ -1,5 +1,5 @@
 import { BufferingMode, WindowMode } from './constants.js';
-import { BreakoutGame } from './breakout-game.js';
+import { SnakeGame } from './snake.js';
 
 const config = {
     fps: 60,
@@ -9,7 +9,7 @@ const config = {
     windowMode: WindowMode.WINDOWED
 };
 
-const game = new BreakoutGame(config);
+const game = new SnakeGame(config);
 game.initialize();
 
 window.addEventListener('keydown', (event) => {
