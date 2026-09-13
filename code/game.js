@@ -37,7 +37,7 @@ export class Game {
         }
 
         this.renderer = new GameRenderer(config);
-        this.gameLoop = new GameLoop(config.fps, this, () => this.renderFrame());
+        this.gameLoop = new GameLoop(config.fps, this, (interpolation) => this.renderFrame(interpolation));
     }
 
     initialize() {
@@ -129,8 +129,9 @@ export class Game {
         this.fps = fps;
     }
 
-    renderFrame() {
-        this.renderer.render((context, canvas) => this.render(context, canvas));
+    renderFrame(interpolation = 1) {
+        this.renderer.render((context, canvas, renderInterpolation) =>
+            this.render(context, canvas, renderInterpolation), interpolation);
     }
 
     init() {
@@ -142,7 +143,7 @@ export class Game {
     resetGame() {
     }
 
-    render(context, canvas) {
+    render(context, canvas, interpolation) {
     }
 
     destroy() {
