@@ -11,10 +11,10 @@ export class Game {
         this.started = false;
         this.initialized = false;
         this.keyMap = new Map([
-            ['UP', 'w'],
-            ['DOWN', 's'],
-            ['LEFT', 'a'],
-            ['RIGHT', 'd'],
+            ['UP', 'ArrowUp'],
+            ['DOWN', 'ArrowDown'],
+            ['LEFT', 'ArrowLeft'],
+            ['RIGHT', 'ArrowRight'],
             ['A', 'j'],
             ['B', 'k'],
             ['C', 'l'],
