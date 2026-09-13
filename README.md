@@ -83,7 +83,7 @@ http://localhost:8000
 - `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas, os buffers e o input do teclado.
 - `breakout-game.js`, `pacman.js`, `snake.js`, `racing.js` e `car-game.js` implementam jogos derivados da classe base.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
-- `game-loop.js` executa o loop principal em dois modos (`setTimeout` com limite de FPS ou `requestAnimationFrame`), atualiza a simulação com passo fixo e envia a interpolação para a renderização.
+- `game-loop.js` executa o loop principal em dois modos (`setTimeout` com limite de `renderFPS` ou `requestAnimationFrame`), atualiza a simulação com passo fixo definido por `updateFPS` e envia a interpolação para a renderização.
 - `sound.js` gerencia a reprodução de áudio.
 - `constants.js` define os modos de tela e buffering.
 
