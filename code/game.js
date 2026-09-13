@@ -5,7 +5,7 @@ export class Game {
 
     constructor(config) {
         this.config = config;
-        this.fps = config.fps;
+        this.fps = 0;
         this.width = config.width;
         this.height = config.height;
         this.started = false;
@@ -37,7 +37,8 @@ export class Game {
         }
 
         this.renderer = new GameRenderer(config);
-        this.gameLoop = new GameLoop(config.fps, this, (interpolation) => this.renderFrame(interpolation));
+        this.gameLoop = new GameLoop(config.updateFPS, config.renderFPS, this,
+            (interpolation) => this.renderFrame(interpolation));
     }
 
     initialize() {
