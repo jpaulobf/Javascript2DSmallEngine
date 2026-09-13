@@ -10,6 +10,8 @@ export class Game {
         this.height = config.height;
         this.started = false;
         this.initialized = false;
+        this.paused = false;
+        this.destroyed = false;
         this.keyMap = new Map([
             ['UP', 'ArrowUp'],
             ['DOWN', 'ArrowDown'],
@@ -19,7 +21,9 @@ export class Game {
             ['B', 'k'],
             ['C', 'l'],
             ['START', 'Enter'],
-            ['SELECT', 'Backspace']
+            ['SELECT', 'Backspace'],
+            ['RESET', 'F12'],
+            ['PAUSE', 'p']
         ]);
         this.keyStates = new Map([...this.keyMap.keys()].map((key) => [key, false]));
         this.previousKeyStates = new Map(this.keyStates);
@@ -37,7 +41,7 @@ export class Game {
     }
 
     initialize() {
-        if (this.initialized) return;
+        if (this.destroyed || this.initialized) return;
 
         this.init();
         this.initialized = true;
@@ -45,14 +49,52 @@ export class Game {
     }
 
     start() {
+        if (this.destroyed) return;
         this.initialize();
         if (this.gameLoop.running) return;
         this.started = true;
+        this.paused = false;
         this.startMusic();
         this.gameLoop.start();
     }
 
+    stop() {
+        this.gameLoop.stop();
+        this.started = false;
+        this.paused = false;
+        this.stopMusic();
+    }
+
+    pause() {
+        if (this.destroyed || !this.started || this.paused) return;
+
+        this.gameLoop.stop();
+        this.paused = true;
+        this.stopMusic();
+    }
+
+    resume() {
+        if (this.destroyed || !this.started || !this.paused) return;
+
+        this.paused = false;
+        this.startMusic();
+        this.gameLoop.start();
+    }
+
+    reset() {
+        if (this.destroyed) return;
+        this.stop();
+        this.resetGame();
+        this.keyStates = new Map([...this.keyMap.keys()].map((key) => [key, false]));
+        this.previousKeyStates = new Map(this.keyStates);
+        this.justPressedKeys = new Map(this.keyStates);
+        this.renderFrame();
+    }
+
     startMusic() {
+    }
+
+    stopMusic() {
     }
 
     processInput() {
@@ -97,6 +139,20 @@ export class Game {
     update(deltaTime) {
     }
 
+    resetGame() {
+    }
+
     render(context, canvas) {
+    }
+
+    destroy() {
+        if (this.destroyed) return;
+
+        this.stop();
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('keydown', this.keyDownHandler);
+            window.removeEventListener('keyup', this.keyUpHandler);
+        }
+        this.destroyed = true;
     }
 }
