@@ -40,6 +40,7 @@ export class BreakoutGame extends Game {
         this.score = 0;
         this.lives = 3;
         this.paddleX = (this.width - this.paddleWidth) / 2;
+        this.previousPaddleX = this.paddleX;
         this.createBricks();
         this.resetBall();
     }
@@ -47,6 +48,8 @@ export class BreakoutGame extends Game {
     resetBall() {
         this.ballX = this.width / 2;
         this.ballY = this.height - 70;
+        this.previousBallX = this.ballX;
+        this.previousBallY = this.ballY;
         this.ballVelocityX = 220;
         this.ballVelocityY = -260;
     }
@@ -83,6 +86,9 @@ export class BreakoutGame extends Game {
     update(deltaTime) {
         if (!this.started || this.status !== 'playing') return;
 
+        this.previousPaddleX = this.paddleX;
+        this.previousBallX = this.ballX;
+        this.previousBallY = this.ballY;
         this.paddleX += this.inputDirection * this.paddleSpeed * deltaTime;
         this.paddleX = Math.max(0, Math.min(this.width - this.paddleWidth, this.paddleX));
 
@@ -152,13 +158,13 @@ export class BreakoutGame extends Game {
         }
     }
 
-    render(context, canvas) {
+    render(context, canvas, interpolation) {
         context.fillStyle = '#08111f';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         this.renderBricks(context);
-        this.renderPaddle(context);
-        this.renderBall(context);
+        this.renderPaddle(context, interpolation);
+        this.renderBall(context, interpolation);
         this.renderHud(context);
 
         if (this.status !== 'playing') this.renderOverlay(context, canvas);
@@ -171,16 +177,23 @@ export class BreakoutGame extends Game {
         }
     }
 
-    renderPaddle(context) {
+    renderPaddle(context, interpolation) {
+        const paddleX = this.interpolate(this.previousPaddleX, this.paddleX, interpolation);
         context.fillStyle = '#f8fafc';
-        context.fillRect(this.paddleX, this.height - 40, this.paddleWidth, this.paddleHeight);
+        context.fillRect(paddleX, this.height - 40, this.paddleWidth, this.paddleHeight);
     }
 
-    renderBall(context) {
+    renderBall(context, interpolation) {
+        const ballX = this.interpolate(this.previousBallX, this.ballX, interpolation);
+        const ballY = this.interpolate(this.previousBallY, this.ballY, interpolation);
         context.fillStyle = '#f8fafc';
         context.beginPath();
-        context.arc(this.ballX, this.ballY, this.ballRadius, 0, Math.PI * 2);
+        context.arc(ballX, ballY, this.ballRadius, 0, Math.PI * 2);
         context.fill();
+    }
+
+    interpolate(previous, current, interpolation) {
+        return previous + (current - previous) * interpolation;
     }
 
     renderHud(context) {
