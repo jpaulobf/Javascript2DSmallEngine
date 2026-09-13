@@ -10,6 +10,27 @@ export class Game {
         this.height = config.height;
         this.started = false;
         this.initialized = false;
+        this.keyMap = new Map([
+            ['UP', 'w'],
+            ['DOWN', 's'],
+            ['LEFT', 'a'],
+            ['RIGHT', 'd'],
+            ['A', 'j'],
+            ['B', 'k'],
+            ['C', 'l'],
+            ['START', 'Enter'],
+            ['SELECT', 'Backspace']
+        ]);
+        this.keyStates = new Map([...this.keyMap.keys()].map((key) => [key, false]));
+        this.previousKeyStates = new Map(this.keyStates);
+        this.justPressedKeys = new Map(this.keyStates);
+
+        this.keyDownHandler = (event) => this.setKeyState(event.key, true, event);
+        this.keyUpHandler = (event) => this.setKeyState(event.key, false, event);
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', this.keyDownHandler);
+            window.addEventListener('keyup', this.keyUpHandler);
+        }
 
         this.renderer = new GameRenderer(config);
         this.gameLoop = new GameLoop(config.fps, this, () => this.renderFrame());
@@ -35,7 +56,31 @@ export class Game {
     }
 
     processInput() {
-        // Placeholder para processar entradas do usuário
+        this.justPressedKeys = new Map([...this.keyStates.keys()].map((key) => [
+            key,
+            this.keyStates.get(key) && !this.previousKeyStates.get(key)
+        ]));
+        this.previousKeyStates = new Map(this.keyStates);
+    }
+
+    setKeyState(key, isPressed, event) {
+        const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
+        for (const [action, mappedKey] of this.keyMap) {
+            const normalizedMappedKey = mappedKey.length === 1 ? mappedKey.toLowerCase() : mappedKey;
+            if (normalizedKey !== normalizedMappedKey) continue;
+
+            this.keyStates.set(action, isPressed);
+            event?.preventDefault();
+            return;
+        }
+    }
+
+    isKeyPressed(action) {
+        return this.keyStates.get(action) === true;
+    }
+
+    wasKeyPressed(action) {
+        return this.justPressedKeys.get(action) === true;
     }
 
     setCurrentFPS(fps) {
