@@ -19,15 +19,20 @@ const config = {
     windowMode: WindowMode.WINDOWED
 };
 
-const games = [
-    new BreakoutGame(config),
-    new PacmanGame(config),
-    new SnakeGame(config),
-    new RacingGame(config),
-    new CarGame(config)
-];
+const run = SNAKE;
+const gameFactories = {
+    [BREAKOUT]: () => new BreakoutGame(config),
+    [PACMAN]: () => new PacmanGame(config),
+    [SNAKE]: () => new SnakeGame(config),
+    [RACING]: () => new RacingGame(config),
+    [CAR]: () => new CarGame(config)
+};
 
-const game = games[SNAKE];
+const createGame = gameFactories[run];
+if (!createGame) throw new Error('Invalid game selection');
+
+const game = createGame();
+
 game.initialize();
 
 window.addEventListener('keydown', (event) => {
