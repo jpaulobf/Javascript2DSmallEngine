@@ -3,7 +3,6 @@ import { Game } from './game.js';
 export class RacingGame extends Game {
 
     init() {
-        this.keys = { left: false, right: false, accelerate: false, brake: false };
         this.roadWidth = 900;
         this.trackLength = 12000;
         this.playerWidth = 54;
@@ -17,19 +16,7 @@ export class RacingGame extends Game {
         this.viewDistance = 2400;
         this.status = 'ready';
 
-        this.keyDownHandler = (event) => this.setKeyState(event.key, true);
-        this.keyUpHandler = (event) => this.setKeyState(event.key, false);
-        window.addEventListener('keydown', this.keyDownHandler);
-        window.addEventListener('keyup', this.keyUpHandler);
-
         this.resetGame();
-    }
-
-    setKeyState(key, isPressed) {
-        if (key === 'ArrowLeft' || key.toLowerCase() === 'a') this.keys.left = isPressed;
-        if (key === 'ArrowRight' || key.toLowerCase() === 'd') this.keys.right = isPressed;
-        if (key === 'ArrowUp' || key.toLowerCase() === 'w') this.keys.accelerate = isPressed;
-        if (key === 'ArrowDown' || key.toLowerCase() === 's') this.keys.brake = isPressed;
     }
 
     start() {
@@ -58,15 +45,18 @@ export class RacingGame extends Game {
     }
 
     processInput() {
-        this.inputDirection = (this.keys.right ? 1 : 0) - (this.keys.left ? 1 : 0);
+        super.processInput();
+        this.inputDirection = (this.isKeyPressed('RIGHT') ? 1 : 0) - (this.isKeyPressed('LEFT') ? 1 : 0);
     }
 
     update(deltaTime) {
         if (!this.started || this.status !== 'playing') return;
 
-        const targetSpeed = this.keys.brake ? 100 : this.maxSpeed;
-        if (this.keys.accelerate || this.keys.brake) {
-            const rate = this.keys.brake ? this.braking : this.acceleration;
+        const isBraking = this.isKeyPressed('DOWN');
+        const isAccelerating = this.isKeyPressed('UP');
+        const targetSpeed = isBraking ? 100 : this.maxSpeed;
+        if (isAccelerating || isBraking) {
+            const rate = isBraking ? this.braking : this.acceleration;
             this.speed += Math.sign(targetSpeed - this.speed) * rate * deltaTime;
         } else {
             this.speed = Math.max(0, this.speed - this.acceleration * 0.35 * deltaTime);
