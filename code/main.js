@@ -19,7 +19,6 @@ const config = {
     windowMode: WindowMode.WINDOWED
 };
 
-const run = SNAKE;
 const gameFactories = {
     [BREAKOUT]: () => new BreakoutGame(config),
     [PACMAN]: () => new PacmanGame(config),
@@ -28,7 +27,7 @@ const gameFactories = {
     [CAR]: () => new CarGame(config)
 };
 
-const createGame = gameFactories[run];
+const createGame = gameFactories[CAR];
 if (!createGame) throw new Error('Invalid game selection');
 
 const game = createGame();
