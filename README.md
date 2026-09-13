@@ -20,7 +20,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 - Modo de buffering: sem buffer, buffer duplo e buffer triplo
 - Modo de janela: normal, fullscreen e janela em fullscreen
 - Jogos Breakout, Pacman, Snake, Racing e Car
-- Seleção do jogo ativo por índice em `main.js`
+- Seleção do jogo ativo por factory em `main.js`
 - Sistema de input centralizado na classe `Game`
 - Reinicialização do jogo com a tecla `F12`
 - Pausa e retomada do jogo com a tecla `P`
@@ -79,7 +79,7 @@ http://localhost:8000
 
 ## Como funciona
 
-- `main.js` cria todos os jogos em uma lista, seleciona o jogo ativo por uma constante de índice e dispara a partida com Enter.
+- `main.js` seleciona uma factory por índice e cria somente o jogo escolhido, disparando a partida com Enter.
 - `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas, os buffers e o input do teclado.
 - `breakout-game.js`, `pacman.js`, `snake.js`, `racing.js` e `car-game.js` implementam jogos derivados da classe base.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
@@ -89,7 +89,7 @@ http://localhost:8000
 
 ### Seleção do jogo
 
-Os jogos são armazenados em uma lista no `main.js`, usando estas posições:
+As factories dos jogos são registradas no `main.js` usando estas posições:
 
 ```javascript
 const BREAKOUT = 0;
@@ -99,11 +99,28 @@ const RACING = 3;
 const CAR = 4;
 ```
 
-Para escolher o jogo executado, altere a seleção no mesmo arquivo:
+Para escolher o jogo executado, altere a seleção no mesmo arquivo. Apenas a factory selecionada será executada:
 
 ```javascript
-const game = games[SNAKE];
+const createGame = gameFactories[SNAKE];
+const game = createGame();
 ```
+
+### Frequências do loop
+
+As frequências da simulação e da renderização são independentes:
+
+```javascript
+const config = {
+    updateFPS: 60,
+    renderFPS: 0,
+    maxUpdatesPerFrame: 5
+};
+```
+
+- `updateFPS` define o passo fixo da simulação.
+- `renderFPS` limita a renderização; `0` usa `requestAnimationFrame`.
+- `maxUpdatesPerFrame` limita quantos updates podem ser processados por renderização. O padrão é `5`; atrasos excedentes são descartados para evitar acúmulo infinito.
 
 ### Controles
 
