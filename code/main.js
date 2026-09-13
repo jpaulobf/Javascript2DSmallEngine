@@ -1,5 +1,15 @@
 import { BufferingMode, WindowMode } from './constants.js';
+import { BreakoutGame } from './breakout-game.js';
+import { CarGame } from './car-game.js';
+import { PacmanGame } from './pacman.js';
+import { RacingGame } from './racing.js';
 import { SnakeGame } from './snake.js';
+
+const BREAKOUT = 0;
+const PACMAN = 1;
+const SNAKE = 2;
+const RACING = 3;
+const CAR = 4;
 
 const config = {
     fps: 60,
@@ -9,11 +19,19 @@ const config = {
     windowMode: WindowMode.WINDOWED
 };
 
-const game = new SnakeGame(config);
+const games = [
+    new BreakoutGame(config),
+    new PacmanGame(config),
+    new SnakeGame(config),
+    new RacingGame(config),
+    new CarGame(config)
+];
+
+const game = games[PACMAN];
 game.initialize();
 
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.repeat) {
+    if (event.key === game.keyMap.get('START') && !event.repeat) {
         game.start();
     }
 });
