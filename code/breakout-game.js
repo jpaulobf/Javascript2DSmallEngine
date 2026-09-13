@@ -23,6 +23,10 @@ export class BreakoutGame extends Game {
         this.music.loop();
     }
 
+    stopMusic() {
+        this.music.stop();
+    }
+
     start() {
         if (this.status === 'won' || this.status === 'gameover') {
             this.resetGame();
