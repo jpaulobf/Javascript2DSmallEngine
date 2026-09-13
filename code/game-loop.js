@@ -11,6 +11,7 @@ export class GameLoop {
         this.renderCallback = renderCallback;
         this.timerId = null;
         this.animationFrameId = null;
+        this.loopGeneration = 0;
     }
 
     setUpdateFPS(updateFPS) {
@@ -29,15 +30,17 @@ export class GameLoop {
         if (this.running) return;
 
         this.running = true;
+        const loopGeneration = ++this.loopGeneration;
         if (this.renderFPS > 0) {
-            this.loopWithFPSLimit();
+            this.loopWithFPSLimit(loopGeneration);
         } else {
-            this.loopRequestAnimationFrame();
+            this.loopRequestAnimationFrame(loopGeneration);
         }
     }
 
     stop() {
         this.running = false;
+        this.loopGeneration++;
 
         if (this.timerId !== null) {
             clearTimeout(this.timerId);
@@ -50,14 +53,14 @@ export class GameLoop {
         }
     }
 
-    loopWithFPSLimit() {
+    loopWithFPSLimit(loopGeneration) {
         let lastTime = performance.now();
         let frames = 0;
         let timer = 0;
         let accumulator = 0;
 
         const loop = () => {
-            if (!this.running) return;
+            if (!this.running || loopGeneration !== this.loopGeneration) return;
 
             const now = performance.now();
             const elapsed = now - lastTime;
@@ -81,14 +84,14 @@ export class GameLoop {
         loop();
     }
 
-    loopRequestAnimationFrame() {
+    loopRequestAnimationFrame(loopGeneration) {
         let lastTime = performance.now();
         let frames = 0;
         let timer = 0;
         let accumulator = 0;
 
         const loop = (now) => {
-            if (!this.running) return;
+            if (!this.running || loopGeneration !== this.loopGeneration) return;
 
             const elapsed = now - lastTime;
             lastTime = now;
