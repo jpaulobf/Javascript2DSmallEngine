@@ -19,7 +19,9 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 - Game loop com controle de tempo e FPS
 - Modo de buffering: sem buffer, buffer duplo e buffer triplo
 - Modo de janela: normal, fullscreen e janela em fullscreen
-- Jogo Breakout com raquete, bola, blocos, pontuação e vidas
+- Jogos Breakout, Pacman, Snake, Racing e Car
+- Seleção do jogo ativo por índice em `main.js`
+- Sistema de input centralizado na classe `Game`
 - Música de fundo com suporte a loop
 - Tela inicial com instrução para iniciar ao pressionar Enter
 
@@ -33,6 +35,9 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 │   ├── constants.js
 │   ├── car-game.js
 │   ├── breakout-game.js
+│   ├── pacman.js
+│   ├── racing.js
+│   ├── snake.js
 │   ├── game-rendering.js
 │   ├── game-loop.js
 │   ├── game.js
@@ -52,7 +57,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 ### Opção 1: abrir diretamente no navegador
 
 1. Abra o arquivo `index.html` no navegador.
-2. Pressione a tecla `Enter` para iniciar a simulação.
+2. Pressione a tecla `Enter` para iniciar o jogo selecionado.
 
 > Pode funcionar em alguns navegadores, mas a execução via servidor local é mais confiável.
 
@@ -72,14 +77,49 @@ http://localhost:8000
 
 ## Como funciona
 
-- `main.js` configura o Breakout, inicializa-o e dispara a partida com Enter.
-- `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas e os buffers.
-- `breakout-game.js` implementa o jogo com `init`, `update` e `render`.
-- `car-game.js` permanece como um exemplo alternativo de classe filha.
+- `main.js` cria todos os jogos em uma lista, seleciona o jogo ativo por uma constante de índice e dispara a partida com Enter.
+- `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas, os buffers e o input do teclado.
+- `breakout-game.js`, `pacman.js`, `snake.js`, `racing.js` e `car-game.js` implementam jogos derivados da classe base.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
 - `game-loop.js` executa o loop principal, atualiza o jogo e limita o FPS.
 - `sound.js` gerencia a reprodução de áudio.
 - `constants.js` define os modos de tela e buffering.
+
+### Seleção do jogo
+
+Os jogos são armazenados em uma lista no `main.js`, usando estas posições:
+
+```javascript
+const BREAKOUT = 0;
+const PACMAN = 1;
+const SNAKE = 2;
+const RACING = 3;
+const CAR = 4;
+```
+
+Para escolher o jogo executado, altere a seleção no mesmo arquivo:
+
+```javascript
+const game = games[SNAKE];
+```
+
+### Controles
+
+O mapa padrão de teclas é definido em `Game`:
+
+| Ação | Tecla |
+| --- | --- |
+| UP | `ArrowUp` |
+| DOWN | `ArrowDown` |
+| LEFT | `ArrowLeft` |
+| RIGHT | `ArrowRight` |
+| A | `j` |
+| B | `k` |
+| C | `l` |
+| START | `Enter` |
+| SELECT | `Backspace` |
+
+Os jogos podem sobrescrever `processInput()` e consultar `isKeyPressed()` ou `wasKeyPressed()` conforme a necessidade.
 
 ## Observações
 
@@ -89,7 +129,6 @@ http://localhost:8000
 
 ## Futuras melhorias
 
-- adicionar entrada do teclado e mouse
 - criar objetos e sprites reutilizáveis
 - implementar colisão
 - criar sistema de fases e UI
