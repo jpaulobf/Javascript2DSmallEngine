@@ -28,7 +28,7 @@ const gameFactories = {
     [CAR]: () => new CarGame(config)
 };
 
-const createGame = gameFactories[CAR];
+const createGame = gameFactories[BREAKOUT];
 if (!createGame) throw new Error('Invalid game selection');
 
 const game = createGame();
