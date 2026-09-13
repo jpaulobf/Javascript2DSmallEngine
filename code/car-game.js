@@ -4,14 +4,22 @@ import { Game } from './game.js';
 export class CarGame extends Game {
 
     init() {
+        this.music = new Sound('../resources/1.mp3');
+        this.resetGame();
+    }
+
+    resetGame() {
         this.carPositionX = 0;
         this.carSpeed = 200.0;
         this.distance = 0.0;
-        this.music = new Sound('../resources/1.mp3');
     }
 
     startMusic() {
         this.music.loop();
+    }
+
+    stopMusic() {
+        this.music.stop();
     }
 
     update(deltaTime) {
