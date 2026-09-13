@@ -38,7 +38,7 @@ export class Game {
 
         this.renderer = new GameRenderer(config);
         this.gameLoop = new GameLoop(config.updateFPS, config.renderFPS, this,
-            (interpolation) => this.renderFrame(interpolation));
+            (interpolation) => this.renderFrame(interpolation), config.maxUpdatesPerFrame);
     }
 
     initialize() {
