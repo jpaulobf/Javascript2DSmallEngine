@@ -4,15 +4,21 @@ import { Game } from './game.js';
 export class CarGame extends Game {
 
     init() {
+        this.carWidth = 50;
+        this.carHeight = 30;
+        this.wheelRadius = 7;
+        this.carSpeed = 240;
         this.music = new Sound('../resources/1.mp3');
         this.resetGame();
     }
 
     resetGame() {
-        this.carPositionX = 0;
+        this.carPositionX = (this.width - this.carWidth) / 2;
+        this.carPositionY = (this.height - this.carHeight) / 2;
         this.previousCarPositionX = this.carPositionX;
-        this.carSpeed = 200.0;
-        this.distance = 0.0;
+        this.previousCarPositionY = this.carPositionY;
+        this.directionX = 1;
+        this.directionY = 0;
     }
 
     startMusic() {
@@ -23,20 +29,44 @@ export class CarGame extends Game {
         this.music.stop();
     }
 
+    processInput() {
+        super.processInput();
+
+        const directionChanged = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+            .some((action) => this.wasKeyPressed(action));
+        if (!directionChanged) return;
+
+        const horizontalDirection = (this.isKeyPressed('RIGHT') ? 1 : 0) -
+            (this.isKeyPressed('LEFT') ? 1 : 0);
+        const verticalDirection = (this.isKeyPressed('DOWN') ? 1 : 0) -
+            (this.isKeyPressed('UP') ? 1 : 0);
+        const directionLength = Math.hypot(horizontalDirection, verticalDirection);
+
+        if (directionLength > 0) {
+            this.directionX = horizontalDirection / directionLength;
+            this.directionY = verticalDirection / directionLength;
+        }
+    }
+
     update(deltaTime) {
         if (!this.started) return;
 
         this.previousCarPositionX = this.carPositionX;
-        if (this.carPositionX > this.width - 50) {
-            this.carPositionX = this.width - 50;
-            this.carSpeed = -Math.abs(this.carSpeed);
-        } else if (this.carPositionX < 0) {
-            this.carPositionX = 0;
-            this.carSpeed = Math.abs(this.carSpeed);
-        }
+        this.previousCarPositionY = this.carPositionY;
 
-        this.distance = this.carSpeed * deltaTime;
-        this.carPositionX += this.distance;
+        this.carPositionX += this.directionX * this.carSpeed * deltaTime;
+        this.carPositionY += this.directionY * this.carSpeed * deltaTime;
+
+        const maxPositionX = this.width - this.carWidth - this.wheelRadius;
+        const maxPositionY = this.height - this.carHeight - this.wheelRadius;
+        if (this.carPositionX < 0 || this.carPositionX > maxPositionX) {
+            this.carPositionX = Math.max(0, Math.min(maxPositionX, this.carPositionX));
+            this.directionX *= -1;
+        }
+        if (this.carPositionY < 0 || this.carPositionY > maxPositionY) {
+            this.carPositionY = Math.max(0, Math.min(maxPositionY, this.carPositionY));
+            this.directionY *= -1;
+        }
     }
 
     render(context, canvas, interpolation) {
@@ -56,17 +86,19 @@ export class CarGame extends Game {
 
         const carPositionX = this.previousCarPositionX +
             (this.carPositionX - this.previousCarPositionX) * interpolation;
+        const carPositionY = this.previousCarPositionY +
+            (this.carPositionY - this.previousCarPositionY) * interpolation;
 
         context.fillStyle = 'blue';
-        context.fillRect(carPositionX, canvas.height - 50, 50, 30);
+        context.fillRect(carPositionX, carPositionY, this.carWidth, this.carHeight);
 
         context.fillStyle = 'black';
         context.beginPath();
-        context.arc(carPositionX + 10, canvas.height - 20, 7, 0, Math.PI * 2);
+        context.arc(carPositionX + 10, carPositionY + this.carHeight, this.wheelRadius, 0, Math.PI * 2);
         context.fill();
 
         context.beginPath();
-        context.arc(carPositionX + 40, canvas.height - 20, 7, 0, Math.PI * 2);
+        context.arc(carPositionX + 40, carPositionY + this.carHeight, this.wheelRadius, 0, Math.PI * 2);
         context.fill();
 
         context.font = '20px Arial';
