@@ -13,31 +13,24 @@ export class SnakeGame extends Game {
         this.stepTime = 0.11;
         this.stepTimer = 0;
         this.status = 'ready';
-        this.keys = {};
-
-        this.keyDownHandler = (event) => this.handleKeyDown(event);
-        window.addEventListener('keydown', this.keyDownHandler);
 
         this.resetGame();
     }
 
-    handleKeyDown(event) {
+    processInput() {
+        super.processInput();
         const directions = {
-            ArrowUp: { x: 0, y: -1 },
-            w: { x: 0, y: -1 },
-            ArrowDown: { x: 0, y: 1 },
-            s: { x: 0, y: 1 },
-            ArrowLeft: { x: -1, y: 0 },
-            a: { x: -1, y: 0 },
-            ArrowRight: { x: 1, y: 0 },
-            d: { x: 1, y: 0 }
+            UP: { x: 0, y: -1 },
+            DOWN: { x: 0, y: 1 },
+            LEFT: { x: -1, y: 0 },
+            RIGHT: { x: 1, y: 0 }
         };
-        const direction = directions[event.key] || directions[event.key.toLowerCase()];
-
-        if (!direction) return;
-        event.preventDefault();
-        if (direction.x + this.direction.x === 0 && direction.y + this.direction.y === 0) return;
-        this.nextDirection = direction;
+        for (const action of Object.keys(directions)) {
+            const direction = directions[action];
+            if (!this.wasKeyPressed(action)) continue;
+            if (direction.x + this.direction.x === 0 && direction.y + this.direction.y === 0) continue;
+            this.nextDirection = direction;
+        }
     }
 
     start() {
