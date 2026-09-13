@@ -13,24 +13,7 @@ export class BreakoutGame extends Game {
         this.brickGap = 6;
         this.brickHeight = 24;
         this.brickMargin = 40;
-        this.keys = {
-            left: false,
-            right: false
-        };
         this.music = new Sound('../resources/1.mp3');
-
-        this.keyDownHandler = (event) => {
-            if (event.key === 'ArrowLeft') this.keys.left = true;
-            if (event.key === 'ArrowRight') this.keys.right = true;
-        };
-
-        this.keyUpHandler = (event) => {
-            if (event.key === 'ArrowLeft') this.keys.left = false;
-            if (event.key === 'ArrowRight') this.keys.right = false;
-        };
-
-        window.addEventListener('keydown', this.keyDownHandler);
-        window.addEventListener('keyup', this.keyUpHandler);
 
         this.resetGame();
         this.status = 'ready';
@@ -87,8 +70,9 @@ export class BreakoutGame extends Game {
     }
 
     processInput() {
-        if (this.keys.left) this.inputDirection = -1;
-        else if (this.keys.right) this.inputDirection = 1;
+        super.processInput();
+        if (this.isKeyPressed('LEFT')) this.inputDirection = -1;
+        else if (this.isKeyPressed('RIGHT')) this.inputDirection = 1;
         else this.inputDirection = 0;
     }
 
