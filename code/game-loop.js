@@ -1,27 +1,34 @@
 export class GameLoop {
 
-    constructor(targetFPS, game, renderCallback) {
+    constructor(updateFPS, renderFPS, game, renderCallback) {
         this.running = false;
-        this.targetFPS = targetFPS;
-        this.timePerTick = targetFPS > 0 ? 1000 / targetFPS : 0;
-        this.fixedDeltaTime = targetFPS > 0 ? 1 / targetFPS : 1 / 60;
+        this.updateFPS = updateFPS > 0 ? updateFPS : 60;
+        this.renderFPS = renderFPS;
+        this.timePerRender = renderFPS > 0 ? 1000 / renderFPS : 0;
+        this.fixedDeltaTime = 1 / this.updateFPS;
         this.game = game;
         this.renderCallback = renderCallback;
         this.timerId = null;
         this.animationFrameId = null;
     }
 
-    setTargetFPS(targetFPS) {
-        this.targetFPS = targetFPS;
-        this.timePerTick = targetFPS > 0 ? 1000 / targetFPS : 0;
-        this.fixedDeltaTime = targetFPS > 0 ? 1 / targetFPS : 1 / 60;
+    setUpdateFPS(updateFPS) {
+        if (updateFPS <= 0) return;
+
+        this.updateFPS = updateFPS;
+        this.fixedDeltaTime = 1 / updateFPS;
+    }
+
+    setRenderFPS(renderFPS) {
+        this.renderFPS = renderFPS;
+        this.timePerRender = renderFPS > 0 ? 1000 / renderFPS : 0;
     }
 
     start() {
         if (this.running) return;
 
         this.running = true;
-        if (this.targetFPS > 0) {
+        if (this.renderFPS > 0) {
             this.loopWithFPSLimit();
         } else {
             this.loopRequestAnimationFrame();
@@ -64,8 +71,8 @@ export class GameLoop {
                 timer -= 1000;
             }
 
-            this.timePerTick = this.targetFPS > 0 ? 1000 / this.targetFPS : 0;
-            const timeToSleep = Math.max(0, this.timePerTick - (performance.now() - now));
+            this.timePerRender = this.renderFPS > 0 ? 1000 / this.renderFPS : 0;
+            const timeToSleep = Math.max(0, this.timePerRender - (performance.now() - now));
 
             this.timerId = setTimeout(loop, timeToSleep);
         };
