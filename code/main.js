@@ -27,7 +27,7 @@ const games = [
     new CarGame(config)
 ];
 
-const game = games[PACMAN];
+const game = games[SNAKE];
 game.initialize();
 
 window.addEventListener('keydown', (event) => {
