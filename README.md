@@ -22,6 +22,8 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 - Jogos Breakout, Pacman, Snake, Racing e Car
 - Seleção do jogo ativo por índice em `main.js`
 - Sistema de input centralizado na classe `Game`
+- Reinicialização do jogo com a tecla `F12`
+- Pausa e retomada do jogo com a tecla `P`
 - Música de fundo com suporte a loop
 - Tela inicial com instrução para iniciar ao pressionar Enter
 
@@ -118,8 +120,10 @@ O mapa padrão de teclas é definido em `Game`:
 | C | `l` |
 | START | `Enter` |
 | SELECT | `Backspace` |
+| RESET | `F12` |
+| PAUSE | `p` |
 
-Os jogos podem sobrescrever `processInput()` e consultar `isKeyPressed()` ou `wasKeyPressed()` conforme a necessidade.
+Os jogos podem sobrescrever `processInput()` e consultar `isKeyPressed()` ou `wasKeyPressed()` conforme a necessidade. A classe `Game` também fornece `start()`, `stop()`, `pause()`, `resume()`, `reset()` e `destroy()` para controlar o ciclo de vida. `reset()` interrompe o loop, restaura o estado inicial do jogo e deixa a tela pronta para um novo `START`. A tecla `P` alterna entre pausa e retomada.
 
 ## Observações
 
