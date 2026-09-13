@@ -1,11 +1,12 @@
 export class GameLoop {
 
-    constructor(updateFPS, renderFPS, game, renderCallback) {
+    constructor(updateFPS, renderFPS, game, renderCallback, maxUpdatesPerFrame = 5) {
         this.running = false;
         this.updateFPS = updateFPS > 0 ? updateFPS : 60;
         this.renderFPS = renderFPS;
         this.timePerRender = renderFPS > 0 ? 1000 / renderFPS : 0;
         this.fixedDeltaTime = 1 / this.updateFPS;
+        this.maxUpdatesPerFrame = maxUpdatesPerFrame;
         this.game = game;
         this.renderCallback = renderCallback;
         this.timerId = null;
@@ -112,9 +113,15 @@ export class GameLoop {
         accumulator += elapsedSeconds;
 
         this.game.processInput();
-        while (accumulator >= this.fixedDeltaTime) {
+        let updates = 0;
+        while (accumulator >= this.fixedDeltaTime && updates < this.maxUpdatesPerFrame) {
             this.game.update(this.fixedDeltaTime);
             accumulator -= this.fixedDeltaTime;
+            updates++;
+        }
+
+        if (updates === this.maxUpdatesPerFrame && accumulator >= this.fixedDeltaTime) {
+            accumulator = 0;
         }
 
         const interpolation = accumulator / this.fixedDeltaTime;
