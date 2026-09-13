@@ -12,7 +12,8 @@ const RACING = 3;
 const CAR = 4;
 
 const config = {
-    fps: 60,
+    updateFPS: 60,
+    renderFPS: 0,
     width: 800,
     height: 600,
     bufferingMode: BufferingMode.DOUBLE,
