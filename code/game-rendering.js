@@ -52,7 +52,7 @@ export class GameRenderer {
         }
     }
 
-    render(drawFrame) {
+    render(drawFrame, interpolation = 1) {
         const isBuffered = this.bufferCanvases.length > 0;
         let context = this.ctx;
         let canvas = this.canvas;
@@ -65,7 +65,7 @@ export class GameRenderer {
 
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.save();
-        drawFrame(context, canvas);
+        drawFrame(context, canvas, interpolation);
         context.restore();
 
         if (isBuffered) {
