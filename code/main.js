@@ -31,7 +31,12 @@ const game = games[SNAKE];
 game.initialize();
 
 window.addEventListener('keydown', (event) => {
-    if (event.key === game.keyMap.get('START') && !event.repeat) {
+    if (event.key === game.keyMap.get('RESET') && !event.repeat) {
+        game.reset();
+    } else if (event.key === game.keyMap.get('PAUSE') && !event.repeat) {
+        if (game.paused) game.resume();
+        else game.pause();
+    } else if (event.key === game.keyMap.get('START') && !event.repeat) {
         game.start();
     }
 });
