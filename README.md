@@ -1,4 +1,4 @@
-# Javascript2DSmallEngine
+# Javascript Small 2D Game Engine
 
 Um pequeno motor/game loop em JavaScript para criação de jogos 2D em canvas, com suporte a renderização em buffer duplo, controle de FPS, fullscreen e reprodução de música.
 
