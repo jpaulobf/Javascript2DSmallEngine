@@ -28,7 +28,9 @@ export class RacingGame extends Game {
     resetGame() {
         this.speed = 0;
         this.distance = 0;
+        this.previousDistance = this.distance;
         this.playerX = 0;
+        this.previousPlayerX = this.playerX;
         this.elapsedTime = 0;
         this.status = 'ready';
         this.createTraffic();
@@ -42,6 +44,10 @@ export class RacingGame extends Game {
             { distance: 6500, x: 0.62, targetX: 0.62, speed: 310, desiredSpeed: 340, color: '#a78bfa' },
             { distance: 8200, x: -0.65, targetX: -0.65, speed: 360, desiredSpeed: 370, color: '#fb7185' }
         ];
+        for (const car of this.traffic) {
+            car.previousDistance = car.distance;
+            car.previousX = car.x;
+        }
     }
 
     processInput() {
@@ -52,6 +58,8 @@ export class RacingGame extends Game {
     update(deltaTime) {
         if (!this.started || this.status !== 'playing') return;
 
+        this.previousDistance = this.distance;
+        this.previousPlayerX = this.playerX;
         const isBraking = this.isKeyPressed('DOWN');
         const isAccelerating = this.isKeyPressed('UP');
         const targetSpeed = isBraking ? 100 : this.maxSpeed;
@@ -80,6 +88,8 @@ export class RacingGame extends Game {
 
     updateTraffic(deltaTime) {
         for (const car of this.traffic) {
+            car.previousDistance = car.distance;
+            car.previousX = car.x;
             const relativeDistance = car.distance - this.distance;
             const isPlayerClosing = relativeDistance > 0 && relativeDistance < 280;
             const isSameLane = Math.abs(car.x - this.playerX) < 0.25;
@@ -106,11 +116,13 @@ export class RacingGame extends Game {
         }
     }
 
-    render(context, canvas) {
+    render(context, canvas, interpolation) {
+        const renderDistance = this.interpolate(this.previousDistance, this.distance, interpolation);
+        const renderPlayerX = this.interpolate(this.previousPlayerX, this.playerX, interpolation);
         this.renderSky(context, canvas);
-        this.renderRoad(context, canvas);
-        this.renderTraffic(context, canvas);
-        this.renderPlayer(context, canvas);
+        this.renderRoad(context, canvas, renderDistance);
+        this.renderTraffic(context, canvas, renderDistance, renderPlayerX, interpolation);
+        this.renderPlayer(context, canvas, renderPlayerX);
         this.renderHud(context, canvas);
         if (this.status !== 'playing') this.renderOverlay(context, canvas);
     }
@@ -134,26 +146,26 @@ export class RacingGame extends Game {
         context.fill();
     }
 
-    renderRoad(context, canvas) {
+    renderRoad(context, canvas, renderDistance) {
         const horizon = canvas.height * 0.48;
 
         context.fillStyle = '#4d8b52';
         context.fillRect(0, horizon, canvas.width, canvas.height - horizon);
 
-        const segmentOffset = this.distance % this.segmentLength;
+        const segmentOffset = renderDistance % this.segmentLength;
         const segmentCount = Math.ceil(this.viewDistance / this.segmentLength);
         for (let index = segmentCount - 1; index >= 0; index--) {
             const nearDistance = Math.max(0, index * this.segmentLength - segmentOffset);
             const farDistance = Math.min(this.viewDistance, (index + 1) * this.segmentLength - segmentOffset);
             if (farDistance <= 0 || farDistance <= nearDistance) continue;
 
-            const near = this.getRoadPoint(canvas, nearDistance);
-            const far = this.getRoadPoint(canvas, farDistance);
+            const near = this.getRoadPoint(canvas, nearDistance, renderDistance);
+            const far = this.getRoadPoint(canvas, farDistance, renderDistance);
             context.fillStyle = index % 2 ? '#373b42' : '#30343a';
             this.drawTrapezoid(context, far.left, far.y, far.right, far.y, near.right, near.y, near.left, near.y);
             context.fill();
 
-            const worldSegment = Math.floor((this.distance + farDistance) / this.segmentLength);
+            const worldSegment = Math.floor((renderDistance + farDistance) / this.segmentLength);
             context.fillStyle = worldSegment % 2 ? '#eee1b5' : '#d64b45';
             this.drawTrapezoid(context, far.left - far.curbWidth, far.y, far.left, far.y,
                 near.left, near.y, near.left - near.curbWidth, near.y);
@@ -177,13 +189,13 @@ export class RacingGame extends Game {
         }
     }
 
-    getRoadPoint(canvas, relativeDistance) {
+    getRoadPoint(canvas, relativeDistance, renderDistance = this.distance) {
         const depth = Math.max(0, Math.min(1, 1 - relativeDistance / this.viewDistance));
         const horizon = canvas.height * 0.48;
         const y = horizon + (canvas.height - horizon) * depth * depth;
         const width = 24 + (canvas.width * 0.9 - 24) * depth;
-        const cameraCurve = this.getRoadCurve(this.distance);
-        const center = canvas.width / 2 + (this.getRoadCurve(this.distance + relativeDistance) - cameraCurve) * depth;
+        const cameraCurve = this.getRoadCurve(renderDistance);
+        const center = canvas.width / 2 + (this.getRoadCurve(renderDistance + relativeDistance) - cameraCurve) * depth;
         return {
             center,
             width,
@@ -207,21 +219,27 @@ export class RacingGame extends Game {
         context.closePath();
     }
 
-    renderTraffic(context, canvas) {
+    renderTraffic(context, canvas, renderDistance, renderPlayerX, interpolation) {
         for (const car of this.traffic) {
-            const relativeDistance = car.distance - this.distance;
+            const carDistance = this.interpolate(car.previousDistance, car.distance, interpolation);
+            const carX = this.interpolate(car.previousX, car.x, interpolation);
+            const relativeDistance = carDistance - renderDistance;
             if (relativeDistance <= 0 || relativeDistance > this.viewDistance) continue;
 
-            const roadPoint = this.getRoadPoint(canvas, relativeDistance);
+            const roadPoint = this.getRoadPoint(canvas, relativeDistance, renderDistance);
             const depth = Math.max(0.02, 1 - relativeDistance / this.viewDistance);
-            const x = roadPoint.center + (car.x - this.playerX) * roadPoint.width / 2;
+            const x = roadPoint.center + (carX - renderPlayerX) * roadPoint.width / 2;
             this.drawCar(context, x, roadPoint.y, 20 + depth * 42, 30 + depth * 66, car.color);
         }
     }
 
-    renderPlayer(context, canvas) {
-        const x = canvas.width / 2 + this.playerX * canvas.width * 0.32;
+    renderPlayer(context, canvas, renderPlayerX) {
+        const x = canvas.width / 2 + renderPlayerX * canvas.width * 0.32;
         this.drawCar(context, x, canvas.height - 72, this.playerWidth, this.playerHeight, '#ef4444');
+    }
+
+    interpolate(previous, current, interpolation) {
+        return previous + (current - previous) * interpolation;
     }
 
     drawCar(context, x, y, width, height, color) {
