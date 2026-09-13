@@ -4,6 +4,7 @@ export class GameLoop {
         this.running = false;
         this.targetFPS = targetFPS;
         this.timePerTick = targetFPS > 0 ? 1000 / targetFPS : 0;
+        this.fixedDeltaTime = targetFPS > 0 ? 1 / targetFPS : 1 / 60;
         this.game = game;
         this.renderCallback = renderCallback;
         this.timerId = null;
@@ -13,6 +14,7 @@ export class GameLoop {
     setTargetFPS(targetFPS) {
         this.targetFPS = targetFPS;
         this.timePerTick = targetFPS > 0 ? 1000 / targetFPS : 0;
+        this.fixedDeltaTime = targetFPS > 0 ? 1 / targetFPS : 1 / 60;
     }
 
     start() {
@@ -44,20 +46,17 @@ export class GameLoop {
         let lastTime = performance.now();
         let frames = 0;
         let timer = 0;
+        let accumulator = 0;
 
         const loop = () => {
             if (!this.running) return;
 
             const now = performance.now();
-            const deltaTime = Math.min((now - lastTime) / 1000, 0.1);
             const elapsed = now - lastTime;
             lastTime = now;
-            timer += elapsed;
-
-            this.game.processInput();
-            this.game.update(deltaTime);
-            this.renderCallback();
+            accumulator = this.processFrame(elapsed, accumulator);
             frames++;
+            timer += elapsed;
 
             if (timer >= 1000) {
                 this.game.setCurrentFPS(frames);
@@ -78,18 +77,16 @@ export class GameLoop {
         let lastTime = performance.now();
         let frames = 0;
         let timer = 0;
+        let accumulator = 0;
 
         const loop = (now) => {
             if (!this.running) return;
 
-            const deltaTime = Math.min((now - lastTime) / 1000, 0.1);
+            const elapsed = now - lastTime;
             lastTime = now;
-
-            this.game.processInput();
-            this.game.update(deltaTime);
-            this.renderCallback();
+            accumulator = this.processFrame(elapsed, accumulator);
             frames++;
-            timer += deltaTime * 1000;
+            timer += elapsed;
 
             if (timer >= 1000) {
                 this.game.setCurrentFPS(frames);
@@ -101,5 +98,20 @@ export class GameLoop {
         };
 
         this.animationFrameId = requestAnimationFrame(loop);
+    }
+
+    processFrame(elapsed, accumulator) {
+        const elapsedSeconds = Math.min(elapsed / 1000, 0.1);
+        accumulator += elapsedSeconds;
+
+        this.game.processInput();
+        while (accumulator >= this.fixedDeltaTime) {
+            this.game.update(this.fixedDeltaTime);
+            accumulator -= this.fixedDeltaTime;
+        }
+
+        const interpolation = accumulator / this.fixedDeltaTime;
+        this.renderCallback(interpolation);
+        return accumulator;
     }
 }
