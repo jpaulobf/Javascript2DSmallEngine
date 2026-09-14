@@ -41,9 +41,7 @@ export class GameRenderer {
     }
 
     setFullScreen() {
-        if (this.windowMode === WindowMode.FULLSCREEN && document.fullscreenEnabled) {
-            this.canvas.requestFullscreen().catch(console.error);
-        } else {
+        if (this.windowMode === WindowMode.FULLSCREEN || this.windowMode === WindowMode.WINDOWED_FULLSCREEN) {
             this.canvas.style.position = 'fixed';
             this.canvas.style.top = 0;
             this.canvas.style.left = 0;
