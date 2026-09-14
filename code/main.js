@@ -1,6 +1,7 @@
 import { BufferingMode, WindowMode } from './constants.js';
 import { BreakoutGame } from './breakout-game.js';
 import { CarGame } from './car-game.js';
+import { DoubleDragonGame } from './double-dragon-game.js';
 import { PacmanGame } from './pacman.js';
 import { RacingGame } from './racing.js';
 import { SnakeGame } from './snake.js';
@@ -10,14 +11,15 @@ const PACMAN = 1;
 const SNAKE = 2;
 const RACING = 3;
 const CAR = 4;
+const DOUBLE_DRAGON = 5;
 
 const config = {
     updateFPS: 60,
     renderFPS: 0,
-    width: 800,
-    height: 600,
-    bufferingMode: BufferingMode.DOUBLE,
-    windowMode: WindowMode.WINDOWED
+    width: 1920,
+    height: 1080,
+    bufferingMode: BufferingMode.TRIPLE,
+    windowMode: WindowMode.FULLSCREEN
 };
 
 const gameFactories = {
@@ -25,10 +27,11 @@ const gameFactories = {
     [PACMAN]: () => new PacmanGame(config),
     [SNAKE]: () => new SnakeGame(config),
     [RACING]: () => new RacingGame(config),
-    [CAR]: () => new CarGame(config)
+    [CAR]: () => new CarGame(config),
+    [DOUBLE_DRAGON]: () => new DoubleDragonGame(config)
 };
 
-const createGame = gameFactories[CAR];
+const createGame = gameFactories[DOUBLE_DRAGON];
 if (!createGame) throw new Error('Invalid game selection');
 
 const game = createGame();
@@ -42,6 +45,9 @@ window.addEventListener('keydown', (event) => {
         if (game.paused) game.resume();
         else game.pause();
     } else if (event.key === game.keyMap.get('START') && !event.repeat) {
+        if (config.windowMode === WindowMode.FULLSCREEN) {
+            document.documentElement.requestFullscreen();
+        }
         game.start();
     }
 });

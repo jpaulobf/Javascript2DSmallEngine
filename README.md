@@ -81,7 +81,7 @@ http://localhost:8000
 
 - `main.js` seleciona uma factory por índice e cria somente o jogo escolhido, disparando a partida com Enter.
 - `game.js` é a classe base: configura o ciclo de vida, o loop, o canvas, os buffers e o input do teclado.
-- `breakout-game.js`, `pacman.js`, `snake.js`, `racing.js` e `car-game.js` implementam jogos derivados da classe base.
+- `breakout-game.js`, `pacman.js`, `snake.js`, `racing.js`, `car-game.js` e `double-dragon-game.js` implementam jogos derivados da classe base.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
 - `game-loop.js` executa o loop principal em dois modos (`setTimeout` com limite de `renderFPS` ou `requestAnimationFrame`), atualiza a simulação com passo fixo definido por `updateFPS` e envia a interpolação para a renderização.
 - `sound.js` gerencia a reprodução de áudio.
@@ -97,6 +97,7 @@ const PACMAN = 1;
 const SNAKE = 2;
 const RACING = 3;
 const CAR = 4;
+const DOUBLE_DRAGON = 5;
 ```
 
 Para escolher o jogo executado, altere a seleção no mesmo arquivo. Apenas a factory selecionada será executada:
@@ -105,6 +106,8 @@ Para escolher o jogo executado, altere a seleção no mesmo arquivo. Apenas a fa
 const createGame = gameFactories[SNAKE];
 const game = createGame();
 ```
+
+O beat'em up de uma fase usa as setas para movimento, `A` para soco, `B` para chute e `C` para pulo. `J`, `K` e `L` também funcionam como os comandos de ação do mapa retro padrão.
 
 ### Frequências do loop
 
