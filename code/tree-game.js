@@ -13,7 +13,7 @@ export class TreeGame extends Game {
         const tile = new Image();
         tile.src = '../resources/tree_tile.png';
         this.treeSprite = new Sprite(tile, this.spriteWidth, this.spriteHeight);
-        this.treeSprite.addAnimation('default', 0, 4, 30 / this.config.updateFPS);
+        this.treeSprite.addAnimation('default', 0, 4, 45 / this.config.updateFPS);
 
         this.resetGame();
     }
@@ -55,5 +55,18 @@ export class TreeGame extends Game {
         this.treeSprite.draw(context, this.treeX, this.treeY, {
             [INVERTED_X]: this.direction < 0
         });
+
+        if (this.status !== 'playing') this.renderOverlay(context, canvas);
+    }
+
+    renderOverlay(context, canvas) {
+        context.fillStyle = 'rgba(8, 17, 31, 0.78)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = '#f8fafc';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.font = '32px Arial';
+        if (this.status === 'ready') context.fillText('PRESS ENTER TO START', canvas.width / 2, canvas.height / 2);
+        context.textBaseline = 'alphabetic';
     }
 }
