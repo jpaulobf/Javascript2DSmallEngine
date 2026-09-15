@@ -7,22 +7,39 @@ export class TreeGame extends Game {
         this.spriteWidth = 24;
         this.spriteHeight = 32;
         this.speed = 60;
-        this.direction = 1;
         this.status = 'ready';
 
         const tile = new Image();
         tile.src = '../resources/tree_tile.png';
-        this.treeSprite = new Sprite(tile, this.spriteWidth, this.spriteHeight);
-        this.treeSprite.addAnimation('default', 0, 4, 45 / this.config.updateFPS);
+        const frameDuration = 45 / this.config.updateFPS;
+        const createTree = (x, y, zoom) => {
+            const sprite = new Sprite(tile, this.spriteWidth, this.spriteHeight);
+            sprite.addAnimation('default', 0, 4, frameDuration, true, zoom);
+            return { sprite, x, y, direction: -1 };
+        };
+
+        this.trees = [
+            createTree(this.width - 80, 180, {}),
+            createTree(this.width - 180, 300, {}),
+            createTree(this.width - 280, 420, {
+                zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'ping-pong' }
+            }),
+            createTree(this.width - 380, 540, {
+                zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'loop' }
+            })
+        ];
+        this.treeSprite = this.trees[0].sprite;
+        this.trees[1].sprite.setZoom(2);
 
         this.resetGame();
     }
 
     resetGame() {
-        this.treeX = (this.width - this.spriteWidth) / 2;
-        this.treeY = (this.height - this.spriteHeight) / 2;
-        this.direction = 1;
-        this.treeSprite?.setInverted(false);
+        for (const tree of this.trees ?? []) {
+            tree.direction = -1;
+            tree.sprite.setInverted(true);
+            tree.sprite.playAnimation('default', true);
+        }
     }
 
     start() {
@@ -33,18 +50,21 @@ export class TreeGame extends Game {
     update(deltaTime) {
         if (!this.started || this.status !== 'playing') return;
 
-        this.treeSprite.update(deltaTime);
-        this.treeX += this.direction * this.speed * deltaTime;
+        for (const tree of this.trees) {
+            tree.sprite.update(deltaTime);
+            tree.x += tree.direction * this.speed * deltaTime;
 
-        const rightLimit = this.width - this.spriteWidth;
-        if (this.treeX >= rightLimit) {
-            this.treeX = rightLimit;
-            this.direction = -1;
-            this.treeSprite.setInverted(true);
-        } else if (this.treeX <= 0) {
-            this.treeX = 0;
-            this.direction = 1;
-            this.treeSprite.setInverted(false);
+            const minimumX = (tree.sprite.zoom - 1) * this.spriteWidth / 2;
+            const maximumX = this.width - (tree.sprite.zoom + 1) * this.spriteWidth / 2;
+            if (tree.x <= minimumX) {
+                tree.x = minimumX;
+                tree.direction = 1;
+                tree.sprite.setInverted(false);
+            } else if (tree.x >= maximumX) {
+                tree.x = maximumX;
+                tree.direction = -1;
+                tree.sprite.setInverted(true);
+            }
         }
     }
 
@@ -52,9 +72,11 @@ export class TreeGame extends Game {
         context.fillStyle = '#b9e3f2';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        this.treeSprite.draw(context, this.treeX, this.treeY, {
-            [INVERTED_X]: this.direction < 0
-        });
+        for (const tree of this.trees) {
+            tree.sprite.draw(context, tree.x, tree.y, {
+                [INVERTED_X]: tree.direction < 0
+            });
+        }
 
         if (this.status !== 'playing') this.renderOverlay(context, canvas);
     }
