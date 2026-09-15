@@ -43,6 +43,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 │   ├── game-rendering.js
 │   ├── game-loop.js
 │   ├── game.js
+│   ├── sprite.js
 │   ├── main.js
 │   └── sound.js
 └── resources/
@@ -84,8 +85,31 @@ http://localhost:8000
 - `breakout-game.js`, `pacman.js`, `snake.js`, `racing.js`, `car-game.js` e `double-dragon-game.js` implementam jogos derivados da classe base.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
 - `game-loop.js` executa o loop principal em dois modos (`setTimeout` com limite de `renderFPS` ou `requestAnimationFrame`), atualiza a simulação com passo fixo definido por `updateFPS` e envia a interpolação para a renderização.
+- `sprite.js` fornece spritesheet, animações nomeadas e inversão horizontal/vertical para reutilizar a mesma imagem.
 - `sound.js` gerencia a reprodução de áudio.
 - `constants.js` define os modos de tela e buffering.
+
+### Sprites e animações
+
+`Sprite` recebe uma imagem com os quadros organizados horizontalmente e o tamanho de cada quadro. Cada animação informa um identificador, o primeiro quadro, a quantidade de quadros e a duração de cada quadro:
+
+```javascript
+import { INVERTED_X, Sprite } from './sprite.js';
+
+const tile = new Image();
+tile.src = './resources/player.png';
+
+const playerSprite = new Sprite(tile, 32, 48);
+playerSprite.addAnimation('idle', 0, 4, 0.12);
+playerSprite.addAnimation('run', 4, 6, 0.08);
+playerSprite.playAnimation('run');
+
+// Chame no update fixo e no render do jogo, respectivamente.
+playerSprite.update(deltaTime);
+playerSprite.draw(context, player.x, player.y, { [INVERTED_X]: player.facing < 0 });
+```
+
+As animações repetem por padrão. Para uma animação que deve parar no último quadro, passe `false` como quinto argumento de `addAnimation`. As flags `INVERTED_X` e `INVERTED_Y` são opcionais e têm valor padrão `false`; também é possível definir o estado padrão com `setInverted()`.
 
 ### Seleção do jogo
 
