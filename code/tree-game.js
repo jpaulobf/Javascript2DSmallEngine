@@ -4,7 +4,7 @@ import { INVERTED_X, Sprite } from './sprite.js';
 export class TreeGame extends Game {
 
     init() {
-        this.spriteWidth = 24;
+        this.spriteWidth = 26;
         this.spriteHeight = 32;
         this.speed = 60;
         this.status = 'ready';
@@ -20,10 +20,10 @@ export class TreeGame extends Game {
 
         this.trees = [
             createTree(this.width - 80, 180, {
-                rotation: { clockwise: true, speed: 360 }}),
+                rotation: { clockwise: true, speed: 0 }}),
             createTree(this.width - 180, 300, {}),
             createTree(this.width - 280, 420, {
-                zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'ping-pong' }
+                zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'ping-pong' }, rotation: { clockwise: true, speed: 150 }
             }),
             createTree(this.width - 380, 540, {
                 zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'loop' }
