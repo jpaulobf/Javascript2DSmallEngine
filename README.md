@@ -130,6 +130,14 @@ playerSprite.addAnimation('hit', 10, 3, 0.08, true, {
 
 O zoom não altera a colisão por padrão. Use `AFFECTS_COLLISION` na animação ou em `setZoom()` para habilitá-la e consulte os limites com `getCollisionBounds(x, y)`. `getBounds(x, y)` sempre retorna os limites visuais atuais.
 
+Uma animação também pode girar o sprite. `clockwise` define o sentido e `speed` varia de `0` a `360`. A velocidade é calculada como `speed / 100` graus por update: `100` mantém a velocidade original de `1` grau e `360` gira `3,6` graus por update.
+
+```javascript
+playerSprite.addAnimation('spin', 0, 4, 0.08, true, {
+    rotation: { clockwise: true, speed: 100 }
+});
+```
+
 ### Seleção do jogo
 
 As factories dos jogos são registradas no `main.js` usando estas posições:
