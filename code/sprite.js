@@ -23,6 +23,7 @@ export class Sprite {
         this.zoomTimer = 0;
         this.zoomDirection = 1;
         this.zoomAnimationEnabled = true;
+        this.rotation = 0;
     }
 
     addAnimation(id, startFrame, frameCount, frameDuration, loop = true, options = {}) {
@@ -32,8 +33,10 @@ export class Sprite {
         if (!Number.isFinite(frameDuration) || frameDuration <= 0) throw new RangeError('Animation frame duration must be greater than zero');
 
         const zoom = this.validateZoom(options.zoom, frameDuration * frameCount);
+        const rotation = this.validateRotation(options.rotation);
 
         this.animations.set(id, { startFrame, frameCount, frameDuration, loop, zoom,
+            rotation,
             affectsCollision: options.affectsCollision ?? options[AFFECTS_COLLISION] ?? false });
         if (this.animationId === null) this.playAnimation(id);
         return this;
@@ -49,6 +52,7 @@ export class Sprite {
         this.zoomTimer = 0;
         this.zoomDirection = 1;
         this.zoomAnimationEnabled = true;
+        this.rotation = 0;
         this.applyAnimationZoom();
         return this;
     }
@@ -58,6 +62,7 @@ export class Sprite {
         if (!animation || !Number.isFinite(deltaTime) || deltaTime <= 0) return;
 
         this.updateZoom(deltaTime, animation);
+        this.updateRotation(animation);
         this.frameTimer += deltaTime;
         while (this.frameTimer >= animation.frameDuration) {
             this.frameTimer -= animation.frameDuration;
@@ -117,6 +122,28 @@ export class Sprite {
         if (animation?.zoom) this.zoom = animation.zoom.minimum;
     }
 
+    validateRotation(rotation) {
+        if (rotation === undefined) return null;
+        if (!rotation || typeof rotation !== 'object') throw new TypeError('Animation rotation must be an object');
+
+        const clockwise = rotation.clockwise ?? false;
+        const speed = rotation.speed ?? 0;
+        if (typeof clockwise !== 'boolean') throw new TypeError('Rotation clockwise must be boolean');
+        if (!Number.isFinite(speed) || speed < 0 || speed > 360) {
+            throw new RangeError('Rotation speed must be between 0 and 360');
+        }
+
+        return { clockwise, speed };
+    }
+
+    updateRotation(animation) {
+        if (!animation.rotation) return;
+
+        const direction = animation.rotation.clockwise ? 1 : -1;
+        this.rotation = (this.rotation + direction * animation.rotation.speed / 100) % 360;
+        if (this.rotation < 0) this.rotation += 360;
+    }
+
     setInverted(invertedX = false, invertedY = false) {
         this.invertedX = Boolean(invertedX);
         this.invertedY = Boolean(invertedY);
@@ -160,13 +187,17 @@ export class Sprite {
         const invertedY = options[INVERTED_Y] ?? this.invertedY;
         const sourceX = this.getFrame() * this.width;
         const bounds = this.getBounds(x, y);
+        const centerX = bounds.width / 2;
+        const centerY = bounds.height / 2;
+        const animation = this.animations.get(this.animationId);
+        const rotation = animation?.rotation ? this.rotation * Math.PI / 180 : 0;
 
         context.save();
-        context.translate(invertedX ? bounds.x + bounds.width : bounds.x,
-            invertedY ? bounds.y + bounds.height : bounds.y);
+        context.translate(bounds.x + centerX, bounds.y + centerY);
+        context.rotate(rotation);
         context.scale(invertedX ? -1 : 1, invertedY ? -1 : 1);
         context.drawImage(this.tile, sourceX, 0, this.width, this.height,
-            0, 0, bounds.width, bounds.height);
+            -centerX, -centerY, bounds.width, bounds.height);
         context.restore();
     }
 }
