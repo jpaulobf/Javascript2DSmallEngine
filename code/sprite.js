@@ -1,5 +1,6 @@
 export const INVERTED_X = 'INVERTED_X';
 export const INVERTED_Y = 'INVERTED_Y';
+export const AFFECTS_COLLISION = 'AFFECTS_COLLISION';
 
 export class Sprite {
 
@@ -17,15 +18,23 @@ export class Sprite {
         this.frameTimer = 0;
         this.invertedX = false;
         this.invertedY = false;
+        this.zoom = 1;
+        this.affectsCollision = false;
+        this.zoomTimer = 0;
+        this.zoomDirection = 1;
+        this.zoomAnimationEnabled = true;
     }
 
-    addAnimation(id, startFrame, frameCount, frameDuration, loop = true) {
+    addAnimation(id, startFrame, frameCount, frameDuration, loop = true, options = {}) {
         if (!id) throw new TypeError('Animation id is required');
         if (!Number.isInteger(startFrame) || startFrame < 0) throw new RangeError('Animation start frame must be a non-negative integer');
         if (!Number.isInteger(frameCount) || frameCount <= 0) throw new RangeError('Animation frame count must be greater than zero');
         if (!Number.isFinite(frameDuration) || frameDuration <= 0) throw new RangeError('Animation frame duration must be greater than zero');
 
-        this.animations.set(id, { startFrame, frameCount, frameDuration, loop });
+        const zoom = this.validateZoom(options.zoom, frameDuration * frameCount);
+
+        this.animations.set(id, { startFrame, frameCount, frameDuration, loop, zoom,
+            affectsCollision: options.affectsCollision ?? options[AFFECTS_COLLISION] ?? false });
         if (this.animationId === null) this.playAnimation(id);
         return this;
     }
@@ -37,6 +46,10 @@ export class Sprite {
         this.animationId = id;
         this.frameIndex = 0;
         this.frameTimer = 0;
+        this.zoomTimer = 0;
+        this.zoomDirection = 1;
+        this.zoomAnimationEnabled = true;
+        this.applyAnimationZoom();
         return this;
     }
 
@@ -44,6 +57,7 @@ export class Sprite {
         const animation = this.animations.get(this.animationId);
         if (!animation || !Number.isFinite(deltaTime) || deltaTime <= 0) return;
 
+        this.updateZoom(deltaTime, animation);
         this.frameTimer += deltaTime;
         while (this.frameTimer >= animation.frameDuration) {
             this.frameTimer -= animation.frameDuration;
@@ -59,9 +73,61 @@ export class Sprite {
         }
     }
 
+    validateZoom(zoom, defaultDuration) {
+        if (zoom === undefined) return null;
+        if (!zoom || typeof zoom !== 'object') throw new TypeError('Animation zoom must be an object');
+
+        const minimum = zoom.minimum ?? 1;
+        const maximum = zoom.maximum ?? minimum;
+        const duration = zoom.duration ?? defaultDuration;
+        const mode = zoom.mode ?? 'ping-pong';
+        if (!Number.isFinite(minimum) || minimum <= 0) throw new RangeError('Zoom minimum must be greater than zero');
+        if (!Number.isFinite(maximum) || maximum < minimum) throw new RangeError('Zoom maximum must not be less than minimum');
+        if (!Number.isFinite(duration) || duration <= 0) throw new RangeError('Zoom duration must be greater than zero');
+        if (mode !== 'loop' && mode !== 'ping-pong') throw new RangeError('Zoom mode must be loop or ping-pong');
+
+        return { minimum, maximum, duration, mode };
+    }
+
+    updateZoom(deltaTime, animation) {
+        if (!animation.zoom || !this.zoomAnimationEnabled) return;
+
+        this.zoomTimer += deltaTime * this.zoomDirection;
+        const { minimum, maximum, duration, mode } = animation.zoom;
+        if (mode === 'loop') {
+            this.zoomTimer %= duration;
+            this.zoom = minimum + (maximum - minimum) * this.zoomTimer / duration;
+            return;
+        }
+
+        while (this.zoomTimer > duration || this.zoomTimer < 0) {
+            if (this.zoomTimer > duration) {
+                this.zoomTimer = duration - (this.zoomTimer - duration);
+                this.zoomDirection = -1;
+            } else if (this.zoomTimer < 0) {
+                this.zoomTimer = -this.zoomTimer;
+                this.zoomDirection = 1;
+            }
+        }
+        this.zoom = minimum + (maximum - minimum) * this.zoomTimer / duration;
+    }
+
+    applyAnimationZoom() {
+        const animation = this.animations.get(this.animationId);
+        if (animation?.zoom) this.zoom = animation.zoom.minimum;
+    }
+
     setInverted(invertedX = false, invertedY = false) {
         this.invertedX = Boolean(invertedX);
         this.invertedY = Boolean(invertedY);
+        return this;
+    }
+
+    setZoom(zoom = 1, options = {}) {
+        if (!Number.isFinite(zoom) || zoom <= 0) throw new RangeError('Zoom must be greater than zero');
+        this.zoom = zoom;
+        this.zoomAnimationEnabled = false;
+        this.affectsCollision = options.affectsCollision ?? options[AFFECTS_COLLISION] ?? false;
         return this;
     }
 
@@ -70,18 +136,37 @@ export class Sprite {
         return animation ? animation.startFrame + this.frameIndex : 0;
     }
 
+    getBounds(x, y, zoom = this.zoom) {
+        const width = this.width * zoom;
+        const height = this.height * zoom;
+        return {
+            x: x - (width - this.width) / 2,
+            y: y - (height - this.height) / 2,
+            width,
+            height
+        };
+    }
+
+    getCollisionBounds(x, y) {
+        const animation = this.animations.get(this.animationId);
+        const affectsCollision = this.affectsCollision || animation?.affectsCollision === true;
+        return this.getBounds(x, y, affectsCollision ? this.zoom : 1);
+    }
+
     draw(context, x, y, options = {}) {
         if (!context || typeof context.drawImage !== 'function') throw new TypeError('A Canvas 2D context is required');
 
         const invertedX = options[INVERTED_X] ?? this.invertedX;
         const invertedY = options[INVERTED_Y] ?? this.invertedY;
         const sourceX = this.getFrame() * this.width;
+        const bounds = this.getBounds(x, y);
 
         context.save();
-        context.translate(invertedX ? x + this.width : x, invertedY ? y + this.height : y);
+        context.translate(invertedX ? bounds.x + bounds.width : bounds.x,
+            invertedY ? bounds.y + bounds.height : bounds.y);
         context.scale(invertedX ? -1 : 1, invertedY ? -1 : 1);
         context.drawImage(this.tile, sourceX, 0, this.width, this.height,
-            0, 0, this.width, this.height);
+            0, 0, bounds.width, bounds.height);
         context.restore();
     }
 }
