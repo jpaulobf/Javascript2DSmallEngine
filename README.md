@@ -20,6 +20,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 - Modo de buffering: sem buffer, buffer duplo e buffer triplo
 - Modo de janela: normal, fullscreen e janela em fullscreen
 - Jogos Breakout, Pacman, Snake, Racing e Car
+- Jogo de demonstração de sprites com animação e inversão horizontal
 - Seleção do jogo ativo por factory em `main.js`
 - Sistema de input centralizado na classe `Game`
 - Reinicialização do jogo com a tecla `F12`
@@ -44,6 +45,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 │   ├── game-loop.js
 │   ├── game.js
 │   ├── sprite.js
+│   ├── tree-game.js
 │   ├── main.js
 │   └── sound.js
 └── resources/
