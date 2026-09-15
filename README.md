@@ -113,6 +113,23 @@ playerSprite.draw(context, player.x, player.y, { [INVERTED_X]: player.facing < 0
 
 As animações repetem por padrão. Para uma animação que deve parar no último quadro, passe `false` como quinto argumento de `addAnimation`. As flags `INVERTED_X` e `INVERTED_Y` são opcionais e têm valor padrão `false`; também é possível definir o estado padrão com `setInverted()`.
 
+O zoom fixo pode ser definido com `setZoom()` e é aplicado a partir do centro do sprite:
+
+```javascript
+playerSprite.setZoom(2);
+```
+
+Uma animação também pode controlar o zoom. O sexto argumento de `addAnimation()` aceita `minimum`, `maximum`, `duration` e o modo `loop` ou `ping-pong`:
+
+```javascript
+playerSprite.addAnimation('hit', 10, 3, 0.08, true, {
+    zoom: { minimum: 1, maximum: 1.4, duration: 0.3, mode: 'ping-pong' },
+    affectsCollision: false
+});
+```
+
+O zoom não altera a colisão por padrão. Use `AFFECTS_COLLISION` na animação ou em `setZoom()` para habilitá-la e consulte os limites com `getCollisionBounds(x, y)`. `getBounds(x, y)` sempre retorna os limites visuais atuais.
+
 ### Seleção do jogo
 
 As factories dos jogos são registradas no `main.js` usando estas posições:
