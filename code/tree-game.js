@@ -19,7 +19,8 @@ export class TreeGame extends Game {
         };
 
         this.trees = [
-            createTree(this.width - 80, 180, {}),
+            createTree(this.width - 80, 180, {
+                rotation: { clockwise: true, speed: 360 }}),
             createTree(this.width - 180, 300, {}),
             createTree(this.width - 280, 420, {
                 zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'ping-pong' }
