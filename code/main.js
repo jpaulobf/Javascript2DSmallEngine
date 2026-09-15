@@ -5,6 +5,7 @@ import { DoubleDragonGame } from './double-dragon-game.js';
 import { PacmanGame } from './pacman.js';
 import { RacingGame } from './racing.js';
 import { SnakeGame } from './snake.js';
+import { TreeGame } from './tree-game.js';
 
 const BREAKOUT = 0;
 const PACMAN = 1;
@@ -12,14 +13,15 @@ const SNAKE = 2;
 const RACING = 3;
 const CAR = 4;
 const DOUBLE_DRAGON = 5;
+const TREE = 6;
 
 const config = {
     updateFPS: 60,
     renderFPS: 0,
-    width: 1920,
-    height: 1080,
+    width: 800,
+    height: 600,
     bufferingMode: BufferingMode.TRIPLE,
-    windowMode: WindowMode.FULLSCREEN
+    windowMode: WindowMode.WINDOWED
 };
 
 const gameFactories = {
@@ -28,10 +30,11 @@ const gameFactories = {
     [SNAKE]: () => new SnakeGame(config),
     [RACING]: () => new RacingGame(config),
     [CAR]: () => new CarGame(config),
-    [DOUBLE_DRAGON]: () => new DoubleDragonGame(config)
+    [DOUBLE_DRAGON]: () => new DoubleDragonGame(config),
+    [TREE]: () => new TreeGame(config)
 };
 
-const createGame = gameFactories[DOUBLE_DRAGON];
+const createGame = gameFactories[TREE];
 if (!createGame) throw new Error('Invalid game selection');
 
 const game = createGame();
