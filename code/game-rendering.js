@@ -8,6 +8,7 @@ export class GameRenderer {
 
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
+        this.ctx.imageSmoothingEnabled = false;
 
         this.initWindow(config.width, config.height);
 
@@ -21,7 +22,9 @@ export class GameRenderer {
             bufferCanvas.width = this.canvas.width;
             bufferCanvas.height = this.canvas.height;
             this.bufferCanvases.push(bufferCanvas);
-            this.bufferContexts.push(bufferCanvas.getContext('2d'));
+            const bufferContext = bufferCanvas.getContext('2d');
+            bufferContext.imageSmoothingEnabled = false;
+            this.bufferContexts.push(bufferContext);
         }
     }
 
