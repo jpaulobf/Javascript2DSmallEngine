@@ -30,7 +30,7 @@ export class TreeGame extends Game {
             })
         ];
         this.treeSprite = this.trees[0].sprite;
-        this.trees[1].sprite.setZoom(2);
+        this.trees[1].sprite.setZoom(4);
 
         this.resetGame();
     }
