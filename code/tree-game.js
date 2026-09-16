@@ -11,7 +11,7 @@ export class TreeGame extends Game {
 
         const tile = new Image();
         tile.src = '../resources/tree_tile.png';
-        const frameDuration = 45 / this.config.updateFPS;
+        const frameDuration = 20 / this.config.updateFPS;
         const createTree = (x, y, zoom) => {
             const sprite = new Sprite(tile, this.spriteWidth, this.spriteHeight);
             sprite.addAnimation('default', 0, 4, frameDuration, true, zoom);
