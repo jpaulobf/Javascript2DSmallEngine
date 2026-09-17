@@ -4,40 +4,51 @@ import { INVERTED_X, Sprite } from './sprite.js';
 export class TreeGame extends Game {
 
     init() {
-        this.spriteWidth = 26;
-        this.spriteHeight = 32;
         this.speed = 60;
         this.status = 'ready';
 
-        const tile = new Image();
-        tile.src = '../resources/tree_tile.png';
         const frameDuration = 20 / this.config.updateFPS;
-        const createTree = (x, y, zoom) => {
-            const sprite = new Sprite(tile, this.spriteWidth, this.spriteHeight);
-            sprite.addAnimation('default', 0, 4, frameDuration, true, zoom);
-            return { sprite, x, y, direction: -1 };
+        const createTree = (x, y, animation, direction = -1) => {
+            const sprite = new Sprite('../resources/tree_tile.png', 26, 32);
+            sprite.addAnimation(animation);
+            return { sprite, x, y, direction, initialDirection: direction };
         };
 
         this.trees = [
             createTree(this.width - 80, 180, {
-                rotation: { clockwise: true, speed: 0 }}),
-            createTree(this.width - 180, 300, {}),
-            createTree(this.width - 280, 420, {
-                zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'ping-pong' }, rotation: { clockwise: true, speed: 150 }
+                id: 'default', startFrame: 0, frameCount: 4, frameDuration, loop: true,
+                rotation: { clockwise: true, speed: 0 }
             }),
+            createTree(this.width - 180, 300, {
+                id: 'default', startFrame: 0, frameCount: 4, frameDuration, loop: true
+            }),
+            createTree(this.width - 280, 420, {
+                id: 'default', startFrame: 0, frameCount: 4, frameDuration, loop: true,
+                zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'ping-pong' },
+                rotation: { clockwise: true, speed: 5 }
+            }),
+            createTree(this.width - 330, 480, {
+                id: 'default', startFrame: 0, frameCount: 4, frameDuration, loop: true,
+                affectsCollision: true
+            }, 1),
             createTree(this.width - 380, 540, {
+                id: 'default', startFrame: 0, frameCount: 4, frameDuration, loop: true,
                 zoom: { minimum: 1, maximum: 2, duration: 1.2, mode: 'loop' }
-            })
+            }),
+            createTree(this.width - 480, 180, {
+                id: 'default', startFrame: 0, frameCount: 4, frameDuration, loop: true
+            }, 1)
         ];
         this.treeSprite = this.trees[0].sprite;
         this.trees[1].sprite.setZoom(4);
+        this.trees[3].sprite.setZoom(2, { affectsCollision: true });
 
         this.resetGame();
     }
 
     resetGame() {
         for (const tree of this.trees ?? []) {
-            tree.direction = -1;
+            tree.direction = tree.initialDirection;
             tree.sprite.setInverted(true);
             tree.sprite.playAnimation('default', true);
         }
@@ -55,8 +66,8 @@ export class TreeGame extends Game {
             tree.sprite.update(deltaTime);
             tree.x += tree.direction * this.speed * deltaTime;
 
-            const minimumX = (tree.sprite.zoom - 1) * this.spriteWidth / 2;
-            const maximumX = this.width - (tree.sprite.zoom + 1) * this.spriteWidth / 2;
+            const minimumX = (tree.sprite.zoom - 1) * tree.sprite.width / 2;
+            const maximumX = this.width - (tree.sprite.zoom + 1) * tree.sprite.width / 2;
             if (tree.x <= minimumX) {
                 tree.x = minimumX;
                 tree.direction = 1;
@@ -66,6 +77,31 @@ export class TreeGame extends Game {
                 tree.direction = -1;
                 tree.sprite.setInverted(true);
             }
+        }
+
+        const sixthTree = this.trees[3];
+        const collidingTrees = [this.trees[2], this.trees[4]].filter(tree =>
+            sixthTree.sprite.collidesWith(tree.sprite,
+                sixthTree.x, sixthTree.y, tree.x, tree.y));
+
+        if (collidingTrees.length > 0) {
+            sixthTree.direction *= -1;
+            sixthTree.sprite.setInverted(sixthTree.direction < 0);
+
+            for (const tree of collidingTrees) {
+                tree.direction *= -1;
+                tree.sprite.setInverted(tree.direction < 0);
+            }
+        }
+
+        const firstTree = this.trees[0];
+        const fifthTree = this.trees[5];
+        if (firstTree.sprite.collidesWith(fifthTree.sprite,
+            firstTree.x, firstTree.y, fifthTree.x, fifthTree.y)) {
+            firstTree.direction *= -1;
+            fifthTree.direction *= -1;
+            firstTree.sprite.setInverted(firstTree.direction < 0);
+            fifthTree.sprite.setInverted(fifthTree.direction < 0);
         }
     }
 
