@@ -93,17 +93,26 @@ http://localhost:8000
 
 ### Sprites e animações
 
-`Sprite` recebe uma imagem com os quadros organizados horizontalmente e o tamanho de cada quadro. Cada animação informa um identificador, o primeiro quadro, a quantidade de quadros e a duração de cada quadro:
+`Sprite` recebe o caminho da imagem com os quadros organizados horizontalmente e o tamanho de cada quadro. Cada animação é configurada como objeto:
 
 ```javascript
 import { INVERTED_X, Sprite } from './sprite.js';
 
-const tile = new Image();
-tile.src = './resources/player.png';
-
-const playerSprite = new Sprite(tile, 32, 48);
-playerSprite.addAnimation('idle', 0, 4, 0.12);
-playerSprite.addAnimation('run', 4, 6, 0.08);
+const playerSprite = new Sprite('./resources/player.png', 32, 48);
+playerSprite.addAnimation({
+    id: 'idle',
+    startFrame: 0,
+    frameCount: 4,
+    frameDuration: 0.12,
+    loop: true
+});
+playerSprite.addAnimation({
+    id: 'run',
+    startFrame: 4,
+    frameCount: 6,
+    frameDuration: 0.08,
+    loop: true
+});
 playerSprite.playAnimation('run');
 
 // Chame no update fixo e no render do jogo, respectivamente.
@@ -111,7 +120,7 @@ playerSprite.update(deltaTime);
 playerSprite.draw(context, player.x, player.y, { [INVERTED_X]: player.facing < 0 });
 ```
 
-As animações repetem por padrão. Para uma animação que deve parar no último quadro, passe `false` como quinto argumento de `addAnimation`. As flags `INVERTED_X` e `INVERTED_Y` são opcionais e têm valor padrão `false`; também é possível definir o estado padrão com `setInverted()`.
+As animações repetem por padrão. Para uma animação que deve parar no último quadro, use `loop: false`. As flags `INVERTED_X` e `INVERTED_Y` são opcionais e têm valor padrão `false`; também é possível definir o estado padrão com `setInverted()`.
 
 O zoom fixo pode ser definido com `setZoom()` e é aplicado a partir do centro do sprite:
 
@@ -119,10 +128,15 @@ O zoom fixo pode ser definido com `setZoom()` e é aplicado a partir do centro d
 playerSprite.setZoom(2);
 ```
 
-Uma animação também pode controlar o zoom. O sexto argumento de `addAnimation()` aceita `minimum`, `maximum`, `duration` e o modo `loop` ou `ping-pong`:
+Uma animação também pode controlar o zoom. A configuração aceita `minimum`, `maximum`, `duration` e o modo `loop` ou `ping-pong`:
 
 ```javascript
-playerSprite.addAnimation('hit', 10, 3, 0.08, true, {
+playerSprite.addAnimation({
+    id: 'hit',
+    startFrame: 10,
+    frameCount: 3,
+    frameDuration: 0.08,
+    loop: true,
     zoom: { minimum: 1, maximum: 1.4, duration: 0.3, mode: 'ping-pong' },
     affectsCollision: false
 });
@@ -130,10 +144,23 @@ playerSprite.addAnimation('hit', 10, 3, 0.08, true, {
 
 O zoom não altera a colisão por padrão. Use `AFFECTS_COLLISION` na animação ou em `setZoom()` para habilitá-la e consulte os limites com `getCollisionBounds(x, y)`. `getBounds(x, y)` sempre retorna os limites visuais atuais.
 
+Para testar a colisão AABB entre dois sprites, informe as posições dos respectivos centros:
+
+```javascript
+if (playerSprite.collidesWith(enemySprite, player.x, player.y, enemy.x, enemy.y)) {
+    // Os retângulos dos sprites estão sobrepostos.
+}
+```
+
 Uma animação também pode girar o sprite. `clockwise` define o sentido e `speed` varia de `0` a `360`. A velocidade é calculada como `speed / 100` graus por update: `100` mantém a velocidade original de `1` grau e `360` gira `3,6` graus por update.
 
 ```javascript
-playerSprite.addAnimation('spin', 0, 4, 0.08, true, {
+playerSprite.addAnimation({
+    id: 'spin',
+    startFrame: 0,
+    frameCount: 4,
+    frameDuration: 0.08,
+    loop: true,
     rotation: { clockwise: true, speed: 100 }
 });
 ```
