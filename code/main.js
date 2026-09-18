@@ -6,6 +6,7 @@ import { PacmanGame } from './pacman.js';
 import { RacingGame } from './racing.js';
 import { SnakeGame } from './snake.js';
 import { TreeGame } from './tree-game.js';
+import { MarioDemo } from './mario-demo.js';
 
 const BREAKOUT = 0;
 const PACMAN = 1;
@@ -14,6 +15,7 @@ const RACING = 3;
 const CAR = 4;
 const DOUBLE_DRAGON = 5;
 const TREE = 6;
+const MARIO_DEMO = 7;
 
 const config = {
     updateFPS: 60,
@@ -31,10 +33,11 @@ const gameFactories = {
     [RACING]: () => new RacingGame(config),
     [CAR]: () => new CarGame(config),
     [DOUBLE_DRAGON]: () => new DoubleDragonGame(config),
-    [TREE]: () => new TreeGame(config)
+    [TREE]: () => new TreeGame(config),
+    [MARIO_DEMO]: () => new MarioDemo(config)
 };
 
-const createGame = gameFactories[TREE];
+const createGame = gameFactories[MARIO_DEMO];
 if (!createGame) throw new Error('Invalid game selection');
 
 const game = createGame();
