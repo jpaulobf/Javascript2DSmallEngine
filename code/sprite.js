@@ -38,6 +38,9 @@ export class Sprite {
         this.zoomDirection = 1;
         this.zoomAnimationEnabled = true;
         this.rotation = 0;
+        this.anchorX = 0;
+        this.anchorY = 0;
+        this.anchorConfigured = false;
     }
 
     // Registra uma animacao e inicia automaticamente a primeira animacao criada.
@@ -195,19 +198,43 @@ export class Sprite {
         return this;
     }
 
+    // Define o ponto de origem normalizado usado para limites e rotacao.
+    setAnchor(anchorX = 0, anchorY = 0) {
+        if (!Number.isFinite(anchorX) || anchorX < 0 || anchorX > 1) {
+            throw new RangeError('Anchor X must be between 0 and 1');
+        }
+        if (!Number.isFinite(anchorY) || anchorY < 0 || anchorY > 1) {
+            throw new RangeError('Anchor Y must be between 0 and 1');
+        }
+
+        this.anchorX = anchorX;
+        this.anchorY = anchorY;
+        this.anchorConfigured = true;
+        return this;
+    }
+
     // Retorna o indice absoluto do quadro atual na spritesheet.
     getFrame() {
         const animation = this.animations.get(this.animationId);
         return animation ? animation.startFrame + this.frameIndex : 0;
     }
 
-    // Calcula os limites visuais centralizados na posicao informada.
+    // Calcula os limites visuais a partir do anchor na posicao informada.
     getBounds(x, y, zoom = this.zoom) {
         const width = this.width * zoom;
         const height = this.height * zoom;
+        if (!this.anchorConfigured) {
+            return {
+                x: x - (width - this.width) / 2,
+                y: y - (height - this.height) / 2,
+                width,
+                height
+            };
+        }
+
         return {
-            x: x - (width - this.width) / 2,
-            y: y - (height - this.height) / 2,
+            x: x - width * this.anchorX,
+            y: y - height * this.anchorY,
             width,
             height
         };
@@ -236,7 +263,7 @@ export class Sprite {
             && bounds.y + bounds.height > otherBounds.y;
     }
 
-    // Desenha o quadro atual, aplicando escala, inversao e rotacao em torno do centro.
+    // Desenha o quadro atual, aplicando escala, inversao e rotacao em torno do anchor.
     draw(context, x, y, options = {}) {
         if (!context || typeof context.drawImage !== 'function') throw new TypeError('A Canvas 2D context is required');
 
@@ -244,17 +271,19 @@ export class Sprite {
         const invertedY = options[INVERTED_Y] ?? this.invertedY;
         const sourceX = this.getFrame() * this.width;
         const bounds = this.getBounds(x, y);
-        const centerX = bounds.width / 2;
-        const centerY = bounds.height / 2;
         const animation = this.animations.get(this.animationId);
         const rotation = animation?.rotation ? this.rotation * Math.PI / 180 : 0;
+        const originX = this.anchorConfigured ? this.anchorX : 0.5;
+        const originY = this.anchorConfigured ? this.anchorY : 0.5;
 
         context.save();
-        context.translate(bounds.x + centerX, bounds.y + centerY);
+        context.translate(this.anchorConfigured ? x : bounds.x + bounds.width / 2,
+            this.anchorConfigured ? y : bounds.y + bounds.height / 2);
         context.rotate(rotation);
         context.scale(invertedX ? -1 : 1, invertedY ? -1 : 1);
         context.drawImage(this.tile, sourceX, 0, this.width, this.height,
-            -centerX, -centerY, bounds.width, bounds.height);
+            -bounds.width * originX, -bounds.height * originY,
+            bounds.width, bounds.height);
         context.restore();
     }
 }
