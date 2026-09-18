@@ -19,7 +19,7 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 - Game loop com controle de tempo e FPS
 - Modo de buffering: sem buffer, buffer duplo e buffer triplo
 - Modo de janela: normal, fullscreen e janela em fullscreen
-- Jogos Breakout, Pacman, Snake, Racing e Car
+- Jogos Breakout, Pacman, Snake, Racing, Car e Mario Demo
 - Jogo de demonstração de sprites com animação e inversão horizontal
 - Seleção do jogo ativo por factory em `main.js`
 - Sistema de input centralizado na classe `Game`
@@ -122,7 +122,16 @@ playerSprite.draw(context, player.x, player.y, { [INVERTED_X]: player.facing < 0
 
 As animações repetem por padrão. Para uma animação que deve parar no último quadro, use `loop: false`. As flags `INVERTED_X` e `INVERTED_Y` são opcionais e têm valor padrão `false`; também é possível definir o estado padrão com `setInverted()`.
 
-O zoom fixo pode ser definido com `setZoom()` e é aplicado a partir do centro do sprite:
+Por padrão, as posições informadas para `draw()`, `getBounds()` e colisão representam o canto superior esquerdo do sprite. Use `setAnchor(x, y)` para escolher outro ponto de origem, com valores normalizados entre `0` e `1`. Por exemplo, `(0.5, 1)` fixa a posição no centro da base:
+
+```javascript
+playerSprite.setAnchor(0.5, 1);
+playerSprite.draw(context, player.x, player.y);
+```
+
+O anchor também é usado como pivô de rotação e permanece fixo durante o zoom.
+
+O zoom fixo pode ser definido com `setZoom()` e é aplicado a partir do anchor do sprite:
 
 ```javascript
 playerSprite.setZoom(2);
@@ -144,7 +153,7 @@ playerSprite.addAnimation({
 
 O zoom não altera a colisão por padrão. Use `AFFECTS_COLLISION` na animação ou em `setZoom()` para habilitá-la e consulte os limites com `getCollisionBounds(x, y)`. `getBounds(x, y)` sempre retorna os limites visuais atuais.
 
-Para testar a colisão AABB entre dois sprites, informe as posições dos respectivos centros:
+Para testar a colisão AABB entre dois sprites, informe as posições correspondentes ao anchor configurado:
 
 ```javascript
 if (playerSprite.collidesWith(enemySprite, player.x, player.y, enemy.x, enemy.y)) {
@@ -165,6 +174,27 @@ playerSprite.addAnimation({
 });
 ```
 
+### TileSet e TileMap
+
+`TileSet` representa uma spritesheet organizada em grade. `TileMap` armazena os indices dos tiles e desenha somente a parte visivel da matriz:
+
+```javascript
+import { TileSet } from './code/tile-set.js';
+import { TileMap } from './code/tile-map.js';
+
+const tileSet = new TileSet('./resources/terrain.png', 16, 16, 8);
+const background = new TileMap(tileSet, [
+    [0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1],
+    [2, 2, 2, 2, 2]
+]);
+
+background.draw(context, camera.x, camera.y, canvas.width, canvas.height);
+background.setTile(2, 1, 3);
+```
+
+Use `null` ou um indice negativo para deixar uma celula vazia. O quarto argumento de `TileSet` informa quantas colunas existem na spritesheet.
+
 ### Seleção do jogo
 
 As factories dos jogos são registradas no `main.js` usando estas posições:
@@ -176,6 +206,8 @@ const SNAKE = 2;
 const RACING = 3;
 const CAR = 4;
 const DOUBLE_DRAGON = 5;
+const TREE = 6;
+const MARIO_DEMO = 7;
 ```
 
 Para escolher o jogo executado, altere a seleção no mesmo arquivo. Apenas a factory selecionada será executada:
