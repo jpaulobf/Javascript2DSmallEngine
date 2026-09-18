@@ -15,7 +15,7 @@ export class TreeGame extends Game {
         };
 
         this.trees = [
-            createTree(this.width - 80, 180, {
+            createTree(this.width - 67, 212, {
                 id: 'default', startFrame: 0, frameCount: 4, frameDuration, loop: true,
                 rotation: { clockwise: true, speed: 0 }
             }),
@@ -40,6 +40,7 @@ export class TreeGame extends Game {
             }, 1)
         ];
         this.treeSprite = this.trees[0].sprite;
+        this.trees[0].sprite.setAnchor(0.5, 1);
         this.trees[1].sprite.setZoom(4);
         this.trees[3].sprite.setZoom(2, { affectsCollision: true });
 
@@ -66,8 +67,10 @@ export class TreeGame extends Game {
             tree.sprite.update(deltaTime);
             tree.x += tree.direction * this.speed * deltaTime;
 
-            const minimumX = (tree.sprite.zoom - 1) * tree.sprite.width / 2;
-            const maximumX = this.width - (tree.sprite.zoom + 1) * tree.sprite.width / 2;
+            const bounds = tree.sprite.getBounds(tree.x, tree.y);
+            const anchorOffsetX = tree.x - bounds.x;
+            const minimumX = anchorOffsetX;
+            const maximumX = this.width - bounds.width + anchorOffsetX;
             if (tree.x <= minimumX) {
                 tree.x = minimumX;
                 tree.direction = 1;
