@@ -8,6 +8,7 @@ const TILE_SIZE = 16;
 const MARIO_WIDTH = 18;
 const MARIO_HEIGHT = 33;
 const MARIO_JUMP_SPEED = 420;
+const MARIO_WALK_JUMP_SPEED = MARIO_JUMP_SPEED * 0.7;
 const MARIO_GRAVITY = 1100;
 const LEVEL_COLUMNS = 160;
 const LEVEL_ROWS = 38;
@@ -22,7 +23,7 @@ export class MarioDemo extends Game {
         this.marioSpeed = 180;
         this.worldMusic = new Sound('../resources/mario.mp3', 1);
         this.coinSound = new Sound('../resources/coin.mp3', 0.1);
-        this.oneUpSound = new Sound('../resources/1up.mp3', 1);
+        this.oneUpSound = new Sound('../resources/1up.mp3', 0.2);
         this.tileSet = new TileSet('../resources/mario_tiles.png', TILE_SIZE, TILE_SIZE, 8);
         this.tileMap = new TileMap(this.tileSet, this.createLevel());
         this.marioSprite = new Sprite('../resources/mario.png', MARIO_WIDTH, MARIO_HEIGHT)
@@ -358,7 +359,7 @@ export class MarioDemo extends Game {
 
         const groundY = GROUND_ROW * TILE_SIZE;
         if (this.wasKeyPressed('A') && this.marioVerticalSpeed === 0 && this.isMarioSupported()) {
-            this.marioVerticalSpeed = -MARIO_JUMP_SPEED;
+            this.marioVerticalSpeed = -(isRunning ? MARIO_JUMP_SPEED : MARIO_WALK_JUMP_SPEED);
         }
         const previousY = this.marioY;
         this.marioY += this.marioVerticalSpeed * deltaTime;
@@ -420,7 +421,7 @@ export class MarioDemo extends Game {
         context.font = '18px Arial';
         context.textAlign = 'left';
         context.fillText(`COINS ${this.collectedCoins}`, 16, 28);
-        context.fillText(`CAMERA ${Math.round(this.cameraX)} / ${this.worldWidth - this.width}`, 16, 28);
+        //context.fillText(`CAMERA ${Math.round(this.cameraX)} / ${this.worldWidth - this.width}`, 16, 28);
         context.textAlign = 'right';
         context.fillText('LEFT / RIGHT', canvas.width - 16, 28);
     }
