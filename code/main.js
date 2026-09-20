@@ -18,7 +18,7 @@ const TREE = 6;
 const MARIO_DEMO = 7;
 
 const config = {
-    updateFPS: 60,
+    updateFPS: 0,
     renderFPS: 0,
     width: 800,
     height: 600,
