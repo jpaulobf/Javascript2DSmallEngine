@@ -6,7 +6,7 @@ import { TileSet } from './tile-set.js';
 
 const TILE_SIZE = 16;
 const MARIO_WIDTH = 18;
-const MARIO_HEIGHT = 34;
+const MARIO_HEIGHT = 33;
 const MARIO_JUMP_SPEED = 420;
 const MARIO_GRAVITY = 1100;
 const LEVEL_COLUMNS = 160;
@@ -22,12 +22,14 @@ export class MarioDemo extends Game {
         this.marioSpeed = 180;
         this.worldMusic = new Sound('../resources/mario.mp3', 1);
         this.coinSound = new Sound('../resources/coin.mp3', 0.1);
+        this.oneUpSound = new Sound('../resources/1up.mp3', 1);
         this.tileSet = new TileSet('../resources/mario_tiles.png', TILE_SIZE, TILE_SIZE, 8);
         this.tileMap = new TileMap(this.tileSet, this.createLevel());
         this.marioSprite = new Sprite('../resources/mario.png', MARIO_WIDTH, MARIO_HEIGHT)
             .addAnimation('idle', 0, 1, 1)
             .addAnimation('walk', 1, 3, 0.12)
             .addAnimation('run', 1, 3, 0.06)
+            .addAnimation('jump', 4, 1, 1)
             .setAnchor(0.5, 1);
         this.coinSprite = new Sprite('../resources/coins.png', 12, 16)
             .addAnimation('spin', 0, 3, 0.20)
@@ -93,7 +95,11 @@ export class MarioDemo extends Game {
         this.coins = this.coins.filter(([x, y]) => {
             const collected = this.marioSprite.collidesWith(this.coinSprite,
                 this.marioX, this.marioY, x, y);
-            if (collected) this.coinSound.play();
+            if (collected) {
+                this.coinSound.play();
+                this.collectedCoins++;
+                if (this.collectedCoins % 10 === 0) this.oneUpSound.play();
+            }
             return !collected;
         });
     }
@@ -322,6 +328,7 @@ export class MarioDemo extends Game {
         this.marioY = GROUND_ROW * TILE_SIZE;
         this.marioVerticalSpeed = 0;
         this.cameraX = 0;
+        this.collectedCoins = 0;
         this.marioSprite.playAnimation('idle', true);
         this.marioSprite.setInverted(false);
         this.status = 'ready';
@@ -365,7 +372,7 @@ export class MarioDemo extends Game {
 
         const isSupported = this.marioVerticalSpeed === 0 && this.isMarioSupported();
         if (!isSupported) {
-            this.marioSprite.playAnimation('idle');
+            this.marioSprite.playAnimation('jump');
         } else if (direction === 0) {
             this.marioSprite.playAnimation('idle');
         } else {
@@ -412,6 +419,7 @@ export class MarioDemo extends Game {
         context.fillStyle = '#172033';
         context.font = '18px Arial';
         context.textAlign = 'left';
+        context.fillText(`COINS ${this.collectedCoins}`, 16, 28);
         context.fillText(`CAMERA ${Math.round(this.cameraX)} / ${this.worldWidth - this.width}`, 16, 28);
         context.textAlign = 'right';
         context.fillText('LEFT / RIGHT', canvas.width - 16, 28);
