@@ -1,9 +1,23 @@
 export class Sound {
 
-    constructor(file) {
+    constructor(file, volume = 1) {
         this.file = file;
+        this.volume = this.validateVolume(volume);
         this.audios = new Set();
         this.currentAudio = null;
+    }
+
+    validateVolume(volume) {
+        if (!Number.isFinite(volume) || volume < 0 || volume > 1) {
+            throw new RangeError('Sound volume must be between 0 and 1');
+        }
+        return volume;
+    }
+
+    setVolume(volume) {
+        this.volume = this.validateVolume(volume);
+        for (const audio of this.audios) audio.volume = this.volume;
+        return this;
     }
 
     play() {
@@ -29,6 +43,7 @@ export class Sound {
     playAudio(loop) {
         const audio = new Audio(this.file);
         audio.loop = loop;
+        audio.volume = this.volume;
         this.audios.add(audio);
         this.currentAudio = audio;
 
