@@ -13,12 +13,12 @@ export class Game {
         this.paused = false;
         this.destroyed = false;
         this.keyMap = new Map([
-            ['UP', 'ArrowUp'],
-            ['DOWN', 'ArrowDown'],
-            ['LEFT', 'ArrowLeft'],
-            ['RIGHT', 'ArrowRight'],
-            ['A', 'j'],
-            ['B', 'k'],
+            ['UP', 'w'],
+            ['DOWN', 's'],
+            ['LEFT', 'a'],
+            ['RIGHT', 'd'],
+            ['A', 'k'],
+            ['B', 'j'],
             ['C', 'l'],
             ['START', 'Enter'],
             ['SELECT', 'Backspace'],
