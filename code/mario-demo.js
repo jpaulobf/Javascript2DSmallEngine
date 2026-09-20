@@ -21,7 +21,7 @@ export class MarioDemo extends Game {
         this.cameraSpeed = 220;
         this.marioSpeed = 180;
         this.worldMusic = new Sound('../resources/mario.mp3', 1);
-        this.coinSound = new Sound('../resources/coin.mp3', 0.5);
+        this.coinSound = new Sound('../resources/coin.mp3', 0.1);
         this.tileSet = new TileSet('../resources/mario_tiles.png', TILE_SIZE, TILE_SIZE, 8);
         this.tileMap = new TileMap(this.tileSet, this.createLevel());
         this.marioSprite = new Sprite('../resources/mario.png', MARIO_WIDTH, MARIO_HEIGHT)
