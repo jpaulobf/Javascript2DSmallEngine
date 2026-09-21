@@ -28,30 +28,6 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 - Música de fundo com suporte a loop
 - Tela inicial com instrução para iniciar ao pressionar Enter
 
-## Estrutura do projeto
-
-```text
-.
-├── index.html
-├── README.md
-├── code/
-│   ├── constants.js
-│   ├── car-game.js
-│   ├── breakout-game.js
-│   ├── pacman.js
-│   ├── racing.js
-│   ├── snake.js
-│   ├── game-rendering.js
-│   ├── game-loop.js
-│   ├── game.js
-│   ├── sprite.js
-│   ├── tree-game.js
-│   ├── main.js
-│   └── sound.js
-└── resources/
-    └── 1.mp3
-```
-
 ## Requisitos
 
 - Navegador moderno com suporte a JavaScript ES modules
