@@ -13,6 +13,8 @@ const MARIO_GRAVITY = 1100;
 const LEVEL_COLUMNS = 160;
 const LEVEL_ROWS = 38;
 const GROUND_ROW = 32;
+const PIT_START_COLUMN = 90;
+const PIT_END_COLUMN = 93;
 
 export class MarioDemo extends Game {
 
@@ -24,6 +26,7 @@ export class MarioDemo extends Game {
         this.worldMusic = new Sound('../resources/mario.mp3', 1);
         this.coinSound = new Sound('../resources/coin.mp3', 0.1);
         this.oneUpSound = new Sound('../resources/1up.mp3', 0.2);
+        this.deadSound = new Sound('../resources/dead.mp3', 1);
         this.tileSet = new TileSet('../resources/mario_tiles.png', TILE_SIZE, TILE_SIZE, 8);
         this.tileMap = new TileMap(this.tileSet, this.createLevel());
         this.marioSprite = new Sprite('../resources/mario.png', MARIO_WIDTH, MARIO_HEIGHT)
@@ -45,7 +48,7 @@ export class MarioDemo extends Game {
         this.marioX = MARIO_WIDTH / 2;
         this.marioY = GROUND_ROW * TILE_SIZE;
         this.marioVerticalSpeed = 0;
-        this.resetGame();
+        this.resetGame(true);
     }
 
     createCoins() {
@@ -75,7 +78,7 @@ export class MarioDemo extends Game {
             [77 * TILE_SIZE + 8, 21 * TILE_SIZE + 8],
             [79 * TILE_SIZE + 8, 21 * TILE_SIZE + 8],
             [81 * TILE_SIZE + 8, 21 * TILE_SIZE + 8],
-            [92 * TILE_SIZE + 8, 16 * TILE_SIZE + 8],
+            [91 * TILE_SIZE + 8, 16 * TILE_SIZE + 8],
             [94 * TILE_SIZE + 8, 16 * TILE_SIZE + 8],
             [103 * TILE_SIZE + 8, 22 * TILE_SIZE + 8],
             [105 * TILE_SIZE + 8, 22 * TILE_SIZE + 8],
@@ -99,7 +102,10 @@ export class MarioDemo extends Game {
             if (collected) {
                 this.coinSound.play();
                 this.collectedCoins++;
-                if (this.collectedCoins % 10 === 0) this.oneUpSound.play();
+                if (this.collectedCoins % 10 === 0) {
+                    this.lives++;
+                    this.oneUpSound.play();
+                }
             }
             return !collected;
         });
@@ -171,6 +177,14 @@ export class MarioDemo extends Game {
         });
     }
 
+    isMarioOverPit() {
+        const pitStartX = PIT_START_COLUMN * TILE_SIZE;
+        const pitEndX = (PIT_END_COLUMN + 1) * TILE_SIZE;
+        const marioRight = this.marioX + MARIO_WIDTH / 2;
+        const marioLeft = this.marioX - MARIO_WIDTH / 2;
+        return marioRight > pitStartX + TILE_SIZE && marioLeft < pitEndX - TILE_SIZE;
+    }
+
     moveMarioHorizontally(direction, speed, deltaTime) {
         const marioHalfWidth = MARIO_WIDTH / 2;
         const minimumMarioX = marioHalfWidth;
@@ -240,8 +254,12 @@ export class MarioDemo extends Game {
 
         // Chao continuo com uma borda superior de terra.
         fillRow(GROUND_ROW, 0, LEVEL_COLUMNS - 1, 1);
+        for (let column = 90; column <= 93; column++) level[GROUND_ROW][column] = null;
         for (let row = GROUND_ROW + 1; row < LEVEL_ROWS; row++) {
             fillRow(row, 0, LEVEL_COLUMNS - 1, 0);
+            if (row <= GROUND_ROW + 5) {
+                for (let column = 90; column <= 93; column++) level[row][column] = null;
+            }
         }
 
         // Matinhos alinhados logo acima do chao.
@@ -324,12 +342,14 @@ export class MarioDemo extends Game {
         return level;
     }
 
-    resetGame() {
+    resetGame(resetLives = true) {
         this.marioX = MARIO_WIDTH / 2;
         this.marioY = GROUND_ROW * TILE_SIZE;
         this.marioVerticalSpeed = 0;
         this.cameraX = 0;
+        this.coins = this.createCoins();
         this.collectedCoins = 0;
+        if (resetLives) this.lives = 3;
         this.marioSprite.playAnimation('idle', true);
         this.marioSprite.setInverted(false);
         this.status = 'ready';
@@ -349,7 +369,28 @@ export class MarioDemo extends Game {
     }
 
     update(deltaTime) {
-        if (!this.started || this.status !== 'playing') return;
+        if (!this.started || (this.status !== 'playing' && this.status !== 'falling')) return;
+
+        if (this.status === 'falling') {
+            this.marioY += this.marioVerticalSpeed * deltaTime;
+            this.marioVerticalSpeed += MARIO_GRAVITY * deltaTime;
+            this.marioSprite.playAnimation('jump');
+            this.marioSprite.update(deltaTime);
+
+            const marioBounds = this.marioSprite.getBounds(this.marioX, this.marioY);
+            if (marioBounds.y > this.height) {
+                this.status = 'dead';
+                this.lives = Math.max(0, this.lives - 1);
+                this.stopMusic();
+                const deadAudio = this.deadSound.play();
+                deadAudio.addEventListener('ended', () => {
+                    this.resetGame(false);
+                    this.status = 'playing';
+                    this.startMusic();
+                }, { once: true });
+            }
+            return;
+        }
 
         const direction = (this.isKeyPressed('RIGHT') ? 1 : 0) -
             (this.isKeyPressed('LEFT') ? 1 : 0);
@@ -370,6 +411,12 @@ export class MarioDemo extends Game {
         }
         this.resolveObstacleCeiling(previousY);
         this.resolveObstacleLanding(previousY);
+
+        if (this.marioY === groundY && this.isMarioOverPit()) {
+            this.status = 'falling';
+            this.marioVerticalSpeed = 0;
+            this.marioSprite.playAnimation('jump', true);
+        }
 
         const isSupported = this.marioVerticalSpeed === 0 && this.isMarioSupported();
         if (!isSupported) {
@@ -401,7 +448,7 @@ export class MarioDemo extends Game {
         this.marioSprite.draw(context, this.marioX - renderCameraX, this.marioY);
         this.renderHud(context, canvas);
 
-        if (this.status !== 'playing') this.renderOverlay(context, canvas);
+        if (this.status === 'ready') this.renderOverlay(context, canvas);
     }
 
     renderSky(context, canvas) {
@@ -421,9 +468,10 @@ export class MarioDemo extends Game {
         context.font = '18px Arial';
         context.textAlign = 'left';
         context.fillText(`COINS ${this.collectedCoins}`, 16, 28);
+        context.fillText(`LIVES ${this.lives}`, 16, 52);
         //context.fillText(`CAMERA ${Math.round(this.cameraX)} / ${this.worldWidth - this.width}`, 16, 28);
         context.textAlign = 'right';
-        context.fillText('LEFT / RIGHT', canvas.width - 16, 28);
+        //context.fillText('LEFT / RIGHT', canvas.width - 16, 28);
     }
 
     renderOverlay(context, canvas) {
