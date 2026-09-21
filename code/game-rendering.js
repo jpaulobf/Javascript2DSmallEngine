@@ -9,6 +9,7 @@ export class GameRenderer {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.ctx.imageSmoothingEnabled = false;
+        this.windowWidth = config.widescreen ? config.wideWidth : config.width;
 
         this.initWindow(config.width, config.height);
 
@@ -35,6 +36,7 @@ export class GameRenderer {
     }
 
     initWindow(width, height) {
+        width = this.windowWidth;
         this.canvas.width = width;
         this.canvas.height = height;
 
