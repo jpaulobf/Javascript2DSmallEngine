@@ -21,6 +21,8 @@ const config = {
     updateFPS: 0,
     renderFPS: 0,
     width: 800,
+    wideWidth: 1066,
+    widescreen: true,
     height: 600,
     bufferingMode: BufferingMode.TRIPLE,
     windowMode: WindowMode.WINDOWED
