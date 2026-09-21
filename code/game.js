@@ -6,7 +6,7 @@ export class Game {
     constructor(config) {
         this.config = config;
         this.fps = 0;
-        this.width = config.width;
+        this.width = config.widescreen ? config.wideWidth : config.width;
         this.height = config.height;
         this.started = false;
         this.initialized = false;
