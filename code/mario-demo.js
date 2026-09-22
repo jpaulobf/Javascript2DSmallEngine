@@ -15,6 +15,8 @@ const MARIO_WALK_MAX_JUMP_SPEED = MARIO_MAX_JUMP_SPEED * 0.7;
 const MARIO_MIN_JUMP_SPEED = 120;
 const MARIO_JUMP_HOLD_TIME = 0.25;
 const MARIO_GRAVITY = 1100;
+const MARIO_NO_DIRECTION_JUMP_MAX_DRIFT = 30;
+const MARIO_NO_DIRECTION_JUMP_DRIFT_SPEED = 40;
 const LEVEL_COLUMNS = 160;
 const LEVEL_ROWS = 38;
 const GROUND_ROW = 32;
@@ -56,6 +58,8 @@ export class MarioDemo extends Game {
         this.isJumping = false;
         this.jumpHoldTime = 0;
         this.marioMaxJumpSpeed = MARIO_MAX_JUMP_SPEED;
+        this.jumpStartedWithoutDirection = false;
+        this.airborneDriftRemaining = 0;
         this.resetGame(true);
     }
 
@@ -192,13 +196,13 @@ export class MarioDemo extends Game {
         return marioRight > pitStartX + TILE_SIZE && marioLeft < pitEndX - TILE_SIZE;
     }
 
-    moveMarioHorizontally(direction, speed, deltaTime) {
+    moveMarioHorizontally(delta) {
+        const direction = Math.sign(delta);
         const marioHalfWidth = MARIO_WIDTH / 2;
         const minimumMarioX = marioHalfWidth;
         const maximumMarioX = this.worldWidth - marioHalfWidth;
         const previousBounds = this.marioSprite.getCollisionBounds(this.marioX, this.marioY);
-        let nextX = Math.max(minimumMarioX, Math.min(maximumMarioX,
-            this.marioX + direction * speed * deltaTime));
+        let nextX = Math.max(minimumMarioX, Math.min(maximumMarioX, this.marioX + delta));
         let nextBounds = this.marioSprite.getCollisionBounds(nextX, this.marioY);
 
         for (const obstacle of this.solidObstacles) {
@@ -357,6 +361,8 @@ export class MarioDemo extends Game {
         this.marioVerticalSpeed = 0;
         this.isJumping = false;
         this.jumpHoldTime = 0;
+        this.jumpStartedWithoutDirection = false;
+        this.airborneDriftRemaining = 0;
         this.camera.moveTo(0, 0);
         this.coins = this.createCoins();
         this.collectedCoins = 0;
@@ -407,7 +413,16 @@ export class MarioDemo extends Game {
             (this.isKeyPressed('LEFT') ? 1 : 0);
         const isRunning = this.isKeyPressed('B');
         const movementSpeed = this.marioSpeed * (isRunning ? 1.5 : 1);
-        this.marioX = this.moveMarioHorizontally(direction, movementSpeed, deltaTime);
+        let horizontalDelta = direction * movementSpeed * deltaTime;
+        // Pulo sem direcao so permite um pequeno arrasto lateral, bem mais lento, ate o limite parametrizado.
+        if (this.jumpStartedWithoutDirection && !this.isMarioSupported()) {
+            const driftDelta = direction * MARIO_NO_DIRECTION_JUMP_DRIFT_SPEED * deltaTime;
+            const allowedDelta = Math.sign(driftDelta) *
+                Math.min(Math.abs(driftDelta), this.airborneDriftRemaining);
+            this.airborneDriftRemaining -= Math.abs(allowedDelta);
+            horizontalDelta = allowedDelta;
+        }
+        this.marioX = this.moveMarioHorizontally(horizontalDelta);
 
         const groundY = GROUND_ROW * TILE_SIZE;
         if (this.wasKeyPressed('A') && this.marioVerticalSpeed === 0 && this.isMarioSupported()) {
@@ -415,6 +430,8 @@ export class MarioDemo extends Game {
             this.marioMaxJumpSpeed = isRunning ? MARIO_MAX_JUMP_SPEED : MARIO_WALK_MAX_JUMP_SPEED;
             this.jumpHoldTime = 0;
             this.isJumping = true;
+            this.jumpStartedWithoutDirection = direction === 0;
+            this.airborneDriftRemaining = MARIO_NO_DIRECTION_JUMP_MAX_DRIFT;
             this.jumpSound.play();
         }
 
@@ -447,6 +464,10 @@ export class MarioDemo extends Game {
         }
 
         const isSupported = this.marioVerticalSpeed === 0 && this.isMarioSupported();
+        if (isSupported) {
+            this.jumpStartedWithoutDirection = false;
+            this.airborneDriftRemaining = 0;
+        }
         if (!isSupported) {
             this.marioSprite.playAnimation('jump');
         } else if (direction === 0) {
