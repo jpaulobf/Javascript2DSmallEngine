@@ -44,8 +44,12 @@ Este projeto é uma base simples para entender como um loop principal de jogo fu
 │   ├── game-rendering.js
 │   ├── game-loop.js
 │   ├── game.js
+│   ├── camera.js
+│   ├── rect.js
+│   ├── scene.js
 │   ├── sprite.js
 │   ├── tree-game.js
+│   ├── ui-text.js
 │   ├── main.js
 │   └── sound.js
 └── resources/
@@ -87,6 +91,10 @@ http://localhost:8000
 - `breakout-game.js`, `pacman.js`, `snake.js`, `racing.js`, `car-game.js` e `double-dragon-game.js` implementam jogos derivados da classe base.
 - `game-rendering.js` fornece a infraestrutura de canvas, janela e buffering para a classe base.
 - `game-loop.js` executa o loop principal em dois modos (`setTimeout` com limite de `renderFPS` ou `requestAnimationFrame`), atualiza a simulação com passo fixo definido por `updateFPS` e envia a interpolação para a renderização.
+- `camera.js` mantém a posição da câmera limitada ao mundo e converte coordenadas de mundo para tela.
+- `rect.js` concentra a verificação de sobreposição AABB entre retângulos.
+- `scene.js` armazena o estado atual do jogo, como `ready`, `playing` e `gameover`.
+- `ui-text.js` desenha texto de interface sem deixar estilos de texto persistirem no contexto do canvas.
 - `sprite.js` fornece spritesheet, animações nomeadas e inversão horizontal/vertical para reutilizar a mesma imagem.
 - `sound.js` gerencia a reprodução de áudio.
 - `constants.js` define os modos de tela e buffering.
