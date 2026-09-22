@@ -1,10 +1,14 @@
 export class Sound {
 
+    static muted = false;
+    static instances = new Set();
+
     constructor(file, volume = 1) {
         this.file = file;
         this.volume = this.validateVolume(volume);
         this.audios = new Set();
         this.currentAudio = null;
+        Sound.instances.add(this);
     }
 
     validateVolume(volume) {
@@ -16,8 +20,18 @@ export class Sound {
 
     setVolume(volume) {
         this.volume = this.validateVolume(volume);
-        for (const audio of this.audios) audio.volume = this.volume;
+        this.updateAudioVolumes();
         return this;
+    }
+
+    static isMuted() {
+        return Sound.muted;
+    }
+
+    static toggleMuted() {
+        Sound.muted = !Sound.muted;
+        for (const sound of Sound.instances) sound.updateAudioVolumes();
+        return Sound.muted;
     }
 
     play() {
@@ -40,10 +54,15 @@ export class Sound {
         }
     }
 
+    updateAudioVolumes() {
+        const volume = Sound.muted ? 0 : this.volume;
+        for (const audio of this.audios) audio.volume = volume;
+    }
+
     playAudio(loop) {
         const audio = new Audio(this.file);
         audio.loop = loop;
-        audio.volume = this.volume;
+        audio.volume = Sound.muted ? 0 : this.volume;
         this.audios.add(audio);
         this.currentAudio = audio;
 

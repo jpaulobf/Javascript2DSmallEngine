@@ -1,4 +1,8 @@
+import { Camera } from './camera.js';
 import { Game } from './game.js';
+import { Rect } from './rect.js';
+import { Scene } from './scene.js';
+import { UiText } from './ui-text.js';
 
 export class DoubleDragonGame extends Game {
 
@@ -14,13 +18,14 @@ export class DoubleDragonGame extends Game {
         this.attackCooldown = 0.08;
         this.enemyWidth = 34;
         this.enemyHeight = 60;
-        this.status = 'ready';
+        this.scene = new Scene();
+        this.camera = new Camera(this.width, this.height, this.worldWidth, this.height);
         this.resetGame();
     }
 
     resetGame() {
         this.score = 0;
-        this.cameraX = 0;
+        this.camera.moveTo(0, 0);
         this.messageTimer = 0;
         this.player = this.createFighter(120, this.groundY - 52, '#38bdf8');
         this.player.health = 5;
@@ -39,7 +44,7 @@ export class DoubleDragonGame extends Game {
             this.createEnemy(1810, 475, '#f97316'),
             this.createEnemy(2100, 420, '#ef4444')
         ];
-        this.status = 'ready';
+        this.scene.set('ready');
     }
 
     createFighter(x, y, color) {
@@ -70,7 +75,7 @@ export class DoubleDragonGame extends Game {
 
     setKeyState(key, isPressed, event) {
         const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
-        const actionAliases = { a: 'A', b: 'B', c: 'C' };
+        const actionAliases = { b: 'B', c: 'C' };
         const action = actionAliases[normalizedKey];
         if (!action) {
             super.setKeyState(key, isPressed, event);
@@ -86,20 +91,20 @@ export class DoubleDragonGame extends Game {
         this.inputX = (this.isKeyPressed('RIGHT') ? 1 : 0) - (this.isKeyPressed('LEFT') ? 1 : 0);
         this.inputY = (this.isKeyPressed('DOWN') ? 1 : 0) - (this.isKeyPressed('UP') ? 1 : 0);
 
-        if (this.status !== 'playing' || this.player.attack || this.player.z > 0) return;
+        if (!this.scene.is('playing') || this.player.attack || this.player.z > 0) return;
         if (this.wasKeyPressed('A')) this.beginAttack('punch');
         else if (this.wasKeyPressed('B')) this.beginAttack('kick');
         else if (this.wasKeyPressed('C')) this.jump();
     }
 
     start() {
-        if (this.status === 'won' || this.status === 'gameover') this.resetGame();
-        this.status = 'playing';
+        if (this.scene.is('won', 'gameover')) this.resetGame();
+        this.scene.set('playing');
         super.start();
     }
 
     update(deltaTime) {
-        if (!this.started || this.status !== 'playing') return;
+        if (!this.started || !this.scene.is('playing')) return;
 
         this.updatePlayer(deltaTime);
         this.updateEnemies(deltaTime);
@@ -107,7 +112,7 @@ export class DoubleDragonGame extends Game {
         this.updateCamera(deltaTime);
 
         if (this.enemies.every((enemy) => enemy.dead)) {
-            this.status = 'won';
+            this.scene.set('won');
             this.messageTimer = 0;
         }
     }
@@ -196,14 +201,11 @@ export class DoubleDragonGame extends Game {
         if (!attack || attack.hit) return;
 
         const reach = attack.type === 'kick' ? 68 : 54;
-        const attackBox = {
-            x: this.player.facing > 0 ? this.player.x + this.player.width / 2 : this.player.x - reach,
-            y: this.player.y - 20,
-            width: reach,
-            height: 40
-        };
+        const attackBox = new Rect(
+            this.player.facing > 0 ? this.player.x + this.player.width / 2 : this.player.x - reach,
+            this.player.y - 20, reach, 40);
         const hitEnemy = this.enemies.find((enemy) => !enemy.dead &&
-            this.overlaps(attackBox, this.getFighterBox(enemy)) && Math.abs(this.player.z) < 18);
+            Rect.overlaps(attackBox, this.getFighterBox(enemy)) && Math.abs(this.player.z) < 18);
 
         if (!hitEnemy) return;
         attack.hit = true;
@@ -224,16 +226,12 @@ export class DoubleDragonGame extends Game {
         this.player.invulnerable = 0.8;
         this.player.stun = 0.28;
         this.player.x += Math.sign(this.player.x - enemy.x || 1) * 30;
-        if (this.player.health <= 0) this.status = 'gameover';
+        if (this.player.health <= 0) this.scene.set('gameover');
     }
 
     getFighterBox(fighter) {
-        return { x: fighter.x, y: fighter.y - fighter.height + 12, width: fighter.width, height: fighter.height - 12 };
-    }
-
-    overlaps(first, second) {
-        return first.x < second.x + second.width && first.x + first.width > second.x &&
-            first.y < second.y + second.height && first.y + first.height > second.y;
+        return new Rect(fighter.x, fighter.y - fighter.height + 12,
+            fighter.width, fighter.height - 12);
     }
 
     constrainFighter(fighter) {
@@ -242,9 +240,7 @@ export class DoubleDragonGame extends Game {
     }
 
     updateCamera(deltaTime) {
-        const target = this.player.x - this.width * 0.35;
-        const maxCamera = this.worldWidth - this.width;
-        this.cameraX += (Math.max(0, Math.min(maxCamera, target)) - this.cameraX) * Math.min(1, deltaTime * 6);
+        this.camera.follow(this.player.x, 0, 0.35, 0, Math.min(1, deltaTime * 6));
     }
 
     render(context, canvas, interpolation) {
@@ -253,7 +249,7 @@ export class DoubleDragonGame extends Game {
         this.renderEnemies(context, interpolation);
         this.renderPlayer(context, interpolation);
         this.renderHud(context, canvas);
-        if (this.status !== 'playing') this.renderOverlay(context, canvas);
+        if (!this.scene.is('playing')) this.renderOverlay(context, canvas);
     }
 
     renderBackground(context, canvas) {
@@ -262,7 +258,7 @@ export class DoubleDragonGame extends Game {
         context.fillStyle = '#1b2c46';
         context.fillRect(0, 0, canvas.width, 330);
         context.fillStyle = '#233d5d';
-        for (let x = -80 - (this.cameraX * 0.18) % 260; x < canvas.width + 260; x += 260) {
+        for (let x = -80 - (this.camera.x * 0.18) % 260; x < canvas.width + 260; x += 260) {
             context.fillRect(x, 100, 170, 230);
             context.fillStyle = '#f8d37a';
             for (let windowY = 125; windowY < 290; windowY += 42) {
@@ -281,11 +277,11 @@ export class DoubleDragonGame extends Game {
         context.fillStyle = '#374151';
         context.fillRect(0, groundTop, canvas.width, canvas.height - groundTop);
         context.fillStyle = '#4b5563';
-        for (let x = -this.cameraX % 80; x < canvas.width; x += 80) context.fillRect(x, groundTop, 40, 5);
+        for (let x = -this.camera.x % 80; x < canvas.width; x += 80) context.fillRect(x, groundTop, 40, 5);
         context.fillStyle = '#111827';
         context.fillRect(0, this.groundY + 34, canvas.width, 4);
         context.save();
-        context.translate(-this.cameraX, 0);
+        context.translate(-this.camera.x, 0);
         context.fillStyle = '#facc15';
         context.fillRect(0, 346, this.worldWidth, 4);
         for (let x = 0; x < this.worldWidth; x += 300) {
@@ -301,7 +297,7 @@ export class DoubleDragonGame extends Game {
     renderEnemies(context, interpolation) {
         for (const enemy of this.enemies) {
             if (enemy.dead) continue;
-            const x = this.interpolate(enemy.previousX, enemy.x, interpolation) - this.cameraX;
+            const x = this.camera.toScreenX(this.interpolate(enemy.previousX, enemy.x, interpolation));
             const y = this.interpolate(enemy.previousY, enemy.y, interpolation);
             this.renderShadow(context, x + enemy.width / 2, y + 8);
             context.fillStyle = enemy.hitFlash > 0 ? '#fef08a' : enemy.color;
@@ -315,7 +311,7 @@ export class DoubleDragonGame extends Game {
 
     renderPlayer(context, interpolation) {
         const player = this.player;
-        const x = this.interpolate(player.previousX, player.x, interpolation) - this.cameraX;
+        const x = this.camera.toScreenX(this.interpolate(player.previousX, player.x, interpolation));
         const y = this.interpolate(player.previousY, player.y, interpolation);
         this.renderShadow(context, x + player.width / 2, y + 8);
         context.globalAlpha = player.invulnerable > 0 && Math.floor(player.invulnerable * 18) % 2 === 0 ? 0.42 : 1;
@@ -344,36 +340,29 @@ export class DoubleDragonGame extends Game {
     }
 
     renderHud(context, canvas) {
-        context.fillStyle = '#f8fafc';
-        context.font = '18px Arial';
-        context.textAlign = 'left';
-        context.fillText(`SCORE ${this.score}`, 20, 30);
-        context.fillText('HP', 20, 58);
+        UiText.draw(context, `SCORE ${this.score}`, 20, 30, { color: '#f8fafc', font: '18px Arial' });
+        UiText.draw(context, 'HP', 20, 58, { color: '#f8fafc', font: '18px Arial' });
         for (let index = 0; index < 5; index++) {
             context.fillStyle = index < this.player.health ? '#ef4444' : '#4b5563';
             context.fillRect(52 + index * 20, 44, 14, 14);
         }
-        context.fillStyle = '#cbd5e1';
-        context.textAlign = 'right';
-        context.fillText(`${this.fps} FPS`, canvas.width - 20, 30);
+        UiText.draw(context, `${this.fps} FPS`, canvas.width - 20, 30,
+            { color: '#cbd5e1', font: '18px Arial', align: 'right' });
     }
 
     renderOverlay(context, canvas) {
         context.fillStyle = 'rgba(8, 15, 29, 0.78)';
         context.fillRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = '#f8fafc';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.font = '36px Arial';
-        if (this.status === 'ready') context.fillText('PRESS ENTER TO START', canvas.width / 2, canvas.height / 2 - 28);
-        if (this.status === 'ready') {
-            context.font = '18px Arial';
-            context.fillStyle = '#bae6fd';
-            context.fillText('ARROWS MOVE   A PUNCH   B KICK   C JUMP', canvas.width / 2, canvas.height / 2 + 24);
+        const textOptions = { color: '#f8fafc', font: '36px Arial', align: 'center', baseline: 'middle' };
+        if (this.scene.is('ready')) {
+            UiText.draw(context, 'PRESS ENTER TO START', canvas.width / 2, canvas.height / 2 - 28, textOptions);
+            UiText.draw(context, 'ARROWS MOVE   A PUNCH   B KICK   C JUMP', canvas.width / 2,
+                canvas.height / 2 + 24, { ...textOptions, color: '#bae6fd', font: '18px Arial' });
         }
-        if (this.status === 'won') context.fillText('STREET CLEARED', canvas.width / 2, canvas.height / 2);
-        if (this.status === 'gameover') context.fillText('GAME OVER - PRESS ENTER', canvas.width / 2, canvas.height / 2);
-        context.textBaseline = 'alphabetic';
+        if (this.scene.is('won')) UiText.draw(context, 'STREET CLEARED', canvas.width / 2, canvas.height / 2, textOptions);
+        if (this.scene.is('gameover')) {
+            UiText.draw(context, 'GAME OVER - PRESS ENTER', canvas.width / 2, canvas.height / 2, textOptions);
+        }
     }
 
     interpolate(previous, current, interpolation) {

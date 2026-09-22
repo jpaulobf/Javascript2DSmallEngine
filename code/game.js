@@ -1,5 +1,6 @@
 import { GameLoop } from './game-loop.js';
 import { GameRenderer } from './game-rendering.js';
+import { Sound } from './sound.js';
 
 export class Game {
 
@@ -12,6 +13,10 @@ export class Game {
         this.initialized = false;
         this.paused = false;
         this.destroyed = false;
+        this.soundIcon = typeof Image !== 'undefined' ? new Image() : null;
+        if (this.soundIcon) this.soundIcon.src = '../resources/sound.png';
+        this.soundControlSize = 24;
+        this.soundControlMargin = 8;
         this.keyMap = new Map([
             ['UP', 'w'],
             ['DOWN', 's'],
@@ -37,6 +42,8 @@ export class Game {
         }
 
         this.renderer = new GameRenderer(config);
+    this.pointerDownHandler = (event) => this.handlePointerDown(event);
+    this.renderer.canvas.addEventListener('pointerdown', this.pointerDownHandler);
         this.gameLoop = new GameLoop(config.updateFPS, config.renderFPS, this,
             (interpolation) => this.renderFrame(interpolation), config.maxUpdatesPerFrame);
     }
@@ -132,7 +139,34 @@ export class Game {
 
     renderFrame(interpolation = 1) {
         this.renderer.render((context, canvas, renderInterpolation) =>
-            this.render(context, canvas, renderInterpolation), interpolation);
+            this.renderWithSoundControl(context, canvas, renderInterpolation), interpolation);
+    }
+
+    renderWithSoundControl(context, canvas, interpolation) {
+        this.render(context, canvas, interpolation);
+        if (!this.soundIcon?.complete || this.soundIcon.naturalWidth < 48) return;
+
+        const x = canvas.width - this.soundControlSize - this.soundControlMargin;
+        const y = canvas.height - this.soundControlSize - this.soundControlMargin;
+        const sourceX = Sound.isMuted() ? this.soundControlSize : 0;
+        context.drawImage(this.soundIcon, sourceX, 0, this.soundControlSize,
+            this.soundControlSize, x, y, this.soundControlSize, this.soundControlSize);
+    }
+
+    handlePointerDown(event) {
+        const rect = this.renderer.canvas.getBoundingClientRect();
+        const scaleX = this.renderer.canvas.width / rect.width;
+        const scaleY = this.renderer.canvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        const controlX = this.renderer.canvas.width - this.soundControlSize - this.soundControlMargin;
+        const controlY = this.renderer.canvas.height - this.soundControlSize - this.soundControlMargin;
+
+        if (x < controlX || x > controlX + this.soundControlSize ||
+            y < controlY || y > controlY + this.soundControlSize) return;
+
+        Sound.toggleMuted();
+        this.renderFrame();
     }
 
     init() {
@@ -155,6 +189,7 @@ export class Game {
             window.removeEventListener('keydown', this.keyDownHandler);
             window.removeEventListener('keyup', this.keyUpHandler);
         }
+        this.renderer.canvas.removeEventListener('pointerdown', this.pointerDownHandler);
         this.destroyed = true;
     }
 }

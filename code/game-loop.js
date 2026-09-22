@@ -115,9 +115,9 @@ export class GameLoop {
         const elapsedSeconds = Math.min(elapsed / 1000, 0.1);
         accumulator += elapsedSeconds;
 
-        this.game.processInput();
         let updates = 0;
         while (accumulator >= this.fixedDeltaTime && updates < this.maxUpdatesPerFrame) {
+            this.game.processInput();
             this.game.update(this.fixedDeltaTime);
             accumulator -= this.fixedDeltaTime;
             updates++;
