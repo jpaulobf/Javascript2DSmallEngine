@@ -12,7 +12,7 @@ export class TileMap {
             throw new RangeError('Tile map rows must have the same positive width');
         }
 
-        const { x = 0, y = 0 } = options;
+        const { x = 0, y = 0, solidTiles = [] } = options;
         if (!Number.isFinite(x) || !Number.isFinite(y)) throw new TypeError('Tile map position must be finite');
 
         this.tileSet = tileSet;
@@ -21,6 +21,7 @@ export class TileMap {
         this.rows = tiles.length;
         this.x = x;
         this.y = y;
+        this.solidTiles = new Set(solidTiles);
     }
 
     get width() {
@@ -48,6 +49,62 @@ export class TileMap {
 
         this.tiles[row][column] = tileIndex;
         return this;
+    }
+
+    // Indica se o indice de tile informado bloqueia movimento.
+    isSolidTile(tileIndex) {
+        return tileIndex !== null && tileIndex !== undefined && this.solidTiles.has(tileIndex);
+    }
+
+    // Indica se a celula do grid e solida.
+    isSolidAt(column, row) {
+        return this.isSolidTile(this.getTile(column, row));
+    }
+
+    // Converte um retangulo em pixels na faixa de colunas/linhas que ele cobre.
+    getTileRange(x, y, width, height) {
+        return {
+            startColumn: Math.max(0, Math.floor((x - this.x) / this.tileSet.tileWidth)),
+            endColumn: Math.min(this.columns - 1, Math.ceil((x + width - this.x) / this.tileSet.tileWidth) - 1),
+            startRow: Math.max(0, Math.floor((y - this.y) / this.tileSet.tileHeight)),
+            endRow: Math.min(this.rows - 1, Math.ceil((y + height - this.y) / this.tileSet.tileHeight) - 1)
+        };
+    }
+
+    // Retorna o retangulo em pixels ocupado por uma celula do grid.
+    getTileBounds(column, row) {
+        return {
+            x: this.x + column * this.tileSet.tileWidth,
+            y: this.y + row * this.tileSet.tileHeight,
+            width: this.tileSet.tileWidth,
+            height: this.tileSet.tileHeight
+        };
+    }
+
+    // Retorna os tiles solidos que sobrepoem o retangulo informado.
+    getSolidTiles(x, y, width, height) {
+        const { startColumn, endColumn, startRow, endRow } = this.getTileRange(x, y, width, height);
+        const tiles = [];
+        for (let row = startRow; row <= endRow; row++) {
+            for (let column = startColumn; column <= endColumn; column++) {
+                if (this.isSolidAt(column, row)) tiles.push(this.getTileBounds(column, row));
+            }
+        }
+        return tiles;
+    }
+
+    // Retorna apenas os tiles solidos cujo topo funciona como piso (sem tile solido logo acima).
+    getSolidSurfaceTiles(x, y, width, height) {
+        return this.getSolidTiles(x, y, width, height)
+            .filter((bounds) => !this.isSolidAt(Math.round((bounds.x - this.x) / this.tileSet.tileWidth),
+                Math.round((bounds.y - this.y) / this.tileSet.tileHeight) - 1));
+    }
+
+    // Retorna apenas os tiles solidos cuja base funciona como teto (sem tile solido logo abaixo).
+    getSolidCeilingTiles(x, y, width, height) {
+        return this.getSolidTiles(x, y, width, height)
+            .filter((bounds) => !this.isSolidAt(Math.round((bounds.x - this.x) / this.tileSet.tileWidth),
+                Math.round((bounds.y - this.y) / this.tileSet.tileHeight) + 1));
     }
 
     // Desenha somente as celulas que podem aparecer na area visivel.
