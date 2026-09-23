@@ -22,6 +22,8 @@ const LEVEL_ROWS = 38;
 const GROUND_ROW = 32;
 const PIT_START_COLUMN = 90;
 const PIT_END_COLUMN = 93;
+// Indices de tiles que bloqueiam o Mario: canos, canhao, escada, plataformas e o telhado do castelo.
+const SOLID_TILE_INDICES = [2, 3, 4, 7, 8, 32, 33, 34, 38, 39, 46, 47];
 
 export class MarioDemo extends Game {
 
@@ -34,7 +36,7 @@ export class MarioDemo extends Game {
         this.deadSound = new Sound('../resources/dead.mp3', 1);
         this.jumpSound = new Sound('../resources/jump.mp3', 0.1);
         this.tileSet = new TileSet('../resources/mario_tiles.png', TILE_SIZE, TILE_SIZE, 8);
-        this.tileMap = new TileMap(this.tileSet, this.createLevel());
+        this.tileMap = new TileMap(this.tileSet, this.createLevel(), { solidTiles: SOLID_TILE_INDICES });
         this.marioSprite = new Sprite('../resources/mario.png', MARIO_WIDTH, MARIO_HEIGHT)
             .addAnimation('idle', 0, 1, 1)
             .addAnimation('walk', 1, 3, 0.12)
@@ -45,11 +47,6 @@ export class MarioDemo extends Game {
             .addAnimation('spin', 0, 3, 0.20)
             .setAnchor(0.5, 0.5);
         this.coins = this.createCoins();
-        this.pipes = this.createPipes();
-        this.cannons = this.createCannons();
-        this.stairs = this.createStairs();
-        this.platforms = this.createPlatforms();
-        this.solidObstacles = [...this.pipes, ...this.cannons, ...this.stairs, ...this.platforms];
         this.worldWidth = this.tileMap.width;
         this.camera = new Camera(this.width, this.height, this.worldWidth, this.height);
         this.marioX = MARIO_WIDTH / 2;
@@ -122,70 +119,13 @@ export class MarioDemo extends Game {
         });
     }
 
-    createPipes() {
-        return [8, 40, 136].map((column) => ({
-            x: column * TILE_SIZE,
-            y: (GROUND_ROW - 2) * TILE_SIZE,
-            width: TILE_SIZE * 2,
-            height: TILE_SIZE * 2
-        }));
-    }
-
-    createCannons() {
-        return [{
-            x: 110 * TILE_SIZE,
-            y: (GROUND_ROW - 1) * TILE_SIZE,
-            width: TILE_SIZE,
-            height: TILE_SIZE
-        }];
-    }
-
-    createStairs() {
-        const stairs = [];
-        for (let step = 0; step < 5; step++) {
-            for (let row = (GROUND_ROW - 1 - step); row <= (GROUND_ROW - 1); row++) {
-                stairs.push({
-                    x: (65 + step) * TILE_SIZE,
-                    y: row * TILE_SIZE,
-                    width: TILE_SIZE,
-                    height: TILE_SIZE
-                });
-            }
-        }
-        return stairs;
-    }
-
-    createPlatforms() {
-        const platformRanges = [
-            [16, 22, 25],
-            [28, 31, 21],
-            [45, 51, 25],
-            [58, 60, 21],
-            [76, 82, 23],
-            [90, 95, 18],
-            [103, 109, 24],
-            [118, 120, 24],
-            [140, 146, 25]
-        ];
-        return platformRanges.flatMap(([startColumn, endColumn, row]) =>
-            Array.from({ length: endColumn - startColumn + 1 }, (_, offset) => ({
-                x: (startColumn + offset) * TILE_SIZE,
-                y: row * TILE_SIZE,
-                width: TILE_SIZE,
-                height: TILE_SIZE
-            })));
-    }
-
     isMarioSupported() {
         const groundY = GROUND_ROW * TILE_SIZE;
         if (this.marioY === groundY) return true;
 
         const marioBounds = this.marioSprite.getCollisionBounds(this.marioX, this.marioY);
-        return this.solidObstacles.some((obstacle) => {
-            const overlapsHorizontally = marioBounds.x < obstacle.x + obstacle.width &&
-                marioBounds.x + marioBounds.width > obstacle.x;
-            return overlapsHorizontally && this.marioY === obstacle.y;
-        });
+        return this.tileMap.getSolidTiles(marioBounds.x, this.marioY, marioBounds.width, 1)
+            .some((tile) => tile.y === this.marioY);
     }
 
     isMarioOverPit() {
@@ -205,7 +145,11 @@ export class MarioDemo extends Game {
         let nextX = Math.max(minimumMarioX, Math.min(maximumMarioX, this.marioX + delta));
         let nextBounds = this.marioSprite.getCollisionBounds(nextX, this.marioY);
 
-        for (const obstacle of this.solidObstacles) {
+        const rangeX = Math.min(previousBounds.x, nextBounds.x);
+        const rangeWidth = Math.max(previousBounds.x + previousBounds.width, nextBounds.x + nextBounds.width) - rangeX;
+        const solidTiles = this.tileMap.getSolidTiles(rangeX, nextBounds.y, rangeWidth, nextBounds.height);
+
+        for (const obstacle of solidTiles) {
             const overlapsVertically = nextBounds.y < obstacle.y + obstacle.height &&
                 nextBounds.y + nextBounds.height > obstacle.y;
             if (!overlapsVertically) continue;
@@ -228,7 +172,10 @@ export class MarioDemo extends Game {
         if (this.marioVerticalSpeed < 0) return;
 
         const marioBounds = this.marioSprite.getCollisionBounds(this.marioX, this.marioY);
-        for (const obstacle of this.solidObstacles) {
+        const rangeY = Math.min(previousY, this.marioY);
+        const rangeHeight = Math.max(previousY, this.marioY) - rangeY + 1;
+        const solidTiles = this.tileMap.getSolidSurfaceTiles(marioBounds.x, rangeY, marioBounds.width, rangeHeight);
+        for (const obstacle of solidTiles) {
             const overlapsHorizontally = marioBounds.x < obstacle.x + obstacle.width &&
                 marioBounds.x + marioBounds.width > obstacle.x;
             if (overlapsHorizontally && previousY <= obstacle.y && this.marioY >= obstacle.y) {
@@ -245,7 +192,10 @@ export class MarioDemo extends Game {
 
         const previousTop = previousY - MARIO_HEIGHT;
         const currentTop = this.marioY - MARIO_HEIGHT;
-        for (const obstacle of this.solidObstacles) {
+        const rangeY = Math.min(previousTop, currentTop);
+        const rangeHeight = Math.max(previousTop, currentTop) - rangeY + 1;
+        const solidTiles = this.tileMap.getSolidCeilingTiles(this.marioX - MARIO_WIDTH / 2, rangeY, MARIO_WIDTH, rangeHeight);
+        for (const obstacle of solidTiles) {
             const overlapsHorizontally = this.marioX - MARIO_WIDTH / 2 < obstacle.x + obstacle.width &&
                 this.marioX + MARIO_WIDTH / 2 > obstacle.x;
             if (overlapsHorizontally && previousTop >= obstacle.y + obstacle.height &&
